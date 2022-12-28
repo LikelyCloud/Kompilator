@@ -10,6 +10,10 @@ class UndeclaredVariableError(Exception):
     pass
 
 
+class UninitializedVariableError(Exception):
+    pass
+
+
 class VariableRedeclarationError(Exception):
     pass
 

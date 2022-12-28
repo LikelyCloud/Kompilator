@@ -1,6 +1,7 @@
 from lexer_parser import Lexer, Parser
+from code_generator import CodeGenerator
 import sys
-from exceptions import LexerError, ParserError, UndeclaredVariableError, VariableRedeclarationError, UndeclaredProcedureError, ProcedureRedeclarationError, ArgumentsProcedureError
+from exceptions import LexerError, ParserError, UndeclaredVariableError, VariableRedeclarationError, UndeclaredProcedureError, ProcedureRedeclarationError, ArgumentsProcedureError, UninitializedVariableError
 
 
 if __name__ == "__main__":
@@ -13,12 +14,16 @@ if __name__ == "__main__":
             input_content = input_file.read()
         # print(input_content)
         try:
-            #tokens = lexer.tokenize(input_content)
+            # tokens = lexer.tokenize(input_content)
             # for tok in tokens:
             #    print(tok)
             parser.parse(lexer.tokenize(input_content))
-            code = parser.context
-            print(code)
+            code = CodeGenerator(parser.ast, parser.context)
+            # code = parser.context
+            # print(code)
+            with open(sys.argv[2], 'w') as output_file:
+                for line in list(map(lambda instr: instr + '\n', code.code)):
+                    output_file.write(line)
         except LexerError as lexer_error:
             print(lexer_error)
 
@@ -27,6 +32,9 @@ if __name__ == "__main__":
 
         except UndeclaredVariableError as undeclared_variable_error:
             print(undeclared_variable_error)
+
+        except UninitializedVariableError as uninitialized_variable_error:
+            print(uninitialized_variable_error)
 
         except VariableRedeclarationError as variable_redeclaration_error:
             print(variable_redeclaration_error)

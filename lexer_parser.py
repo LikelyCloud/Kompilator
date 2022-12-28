@@ -82,10 +82,12 @@ class Parser(sly.Parser):
     def __init__(self):
         super().__init__()
         self.context = Context()
+        self.ast = []
 
     @_('procedures main')
     def program_all(self, p):
-        pass
+        # return "PROGRAM", p.procedures, p.main
+        self.ast = ("PROCEDURES", p.procedures), p.main
 
     @_('procedures PROCEDURE proc_head IS VAR declarations BEGIN commands END')
     def procedures(self, p):
@@ -112,6 +114,7 @@ class Parser(sly.Parser):
                         p.proc_head[0]).add_variable(Variable(var))
             self.context.get_procedure(
                 p.proc_head[0]).formal_arguments = len(p.proc_head[1])
+        return p.procedures + [(p.proc_head[0], p.commands)]
 
     @_('procedures PROCEDURE proc_head IS BEGIN commands END')
     def procedures(self, p):
@@ -131,10 +134,11 @@ class Parser(sly.Parser):
                         p.proc_head[0]).add_variable(Variable(var))
             self.context.get_procedure(
                 p.proc_head[0]).formal_arguments = len(p.proc_head[1])
+        return p.procedures + [(p.proc_head[0], p.commands)]
 
     @ _('')
     def procedures(self, p):
-        pass
+        return []
 
     @ _('PROGRAM IS VAR declarations BEGIN commands END')
     def main(self, p):
@@ -144,11 +148,15 @@ class Parser(sly.Parser):
                 raise VariableRedeclarationError(
                     f">>> Redeclared variable {var} in line {p.lineno}")
             else:
-                self.context.get_procedure("MAIN").add_variable(Variable(var))
+                self.context.get_procedure("MAIN").add_variable(
+                    Variable(var, self.context.memory_offset))
+                self.context.memory_offset += 1
+        # print(p.commands)
+        return "MAIN", p.commands
 
     @ _('PROGRAM IS BEGIN commands END')
     def main(self, p):
-        pass
+        return "MAIN", p.commands
 
     @ _('commands command')
     def commands(self, p):

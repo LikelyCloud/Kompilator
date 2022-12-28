@@ -4,12 +4,13 @@
 class Variable:
     # name
     # value
-    def __init__(self, name: str, value: int = None):
+    def __init__(self, name: str, memory_address: int, declared: bool = False):
         self.name = name
-        self.value = value
+        self.memory_address = memory_address
+        self.declared = declared
 
     def __str__(self):
-        return f"Name: {self.name}, value: {self.value}"
+        return f"Name: {self.name}, memory_address: {self.memory_address}, value: {self.declared}"
 
 
 class Procedure:
@@ -47,6 +48,7 @@ class Context:
     def __init__(self):
         self.procedures = []
         self.current_procedure = ""
+        self.memory_offset = 1
 
     def add_procedure(self, proc: Procedure):
         self.procedures.append(proc)
@@ -58,7 +60,10 @@ class Context:
             return True
         return False
 
-    def get_procedure(self, proc_name: str):
+    def get_procedure(self, proc_name: str = ""):
+        if proc_name == "":
+            proc_name = self.current_procedure
+
         result = list(filter(lambda proc: proc.name ==
                       proc_name, self.procedures))
         if result != []:

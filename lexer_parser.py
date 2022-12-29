@@ -151,7 +151,6 @@ class Parser(sly.Parser):
                 self.context.get_procedure("MAIN").add_variable(
                     Variable(var, self.context.memory_offset))
                 self.context.memory_offset += 1
-        # print(p.commands)
         return "MAIN", p.commands
 
     @ _('PROGRAM IS BEGIN commands END')

@@ -10,7 +10,7 @@ class Variable:
         self.declared = declared
 
     def __str__(self):
-        return f"Name: {self.name}, memory_address: {self.memory_address}, value: {self.declared}"
+        return f"Name: {self.name}, memory_address: {self.memory_address}, declared: {self.declared}"
 
 
 class Procedure:

@@ -18,6 +18,8 @@ if __name__ == "__main__":
             # for tok in tokens:
             #    print(tok)
             parser.parse(lexer.tokenize(input_content))
+            # print(parser.context, "#######")
+            # print(parser.ast)
             code = CodeGenerator(parser.ast, parser.context)
             # code = parser.context
             # print(code)

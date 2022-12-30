@@ -196,38 +196,46 @@ class CodeGenerator:
                     self.code.append(f"STORE {var.memory_address}")
 
             elif instr[0] == "IF":
-                self.evaluate_condition(instr[1])
+                cond = self.evaluate_condition(instr[1])
                 # self.code[-1].replace("ifend",
                 #                      str(len(self.code) + len(instr[2])))
                 line = len(self.code) - 1  # line to add jump place
                 self.generate_code(instr[2])
                 self.code[line] += str(len(self.code))
+                if cond != None:
+                    self.code[cond] += str(len(self.code))
                 # replace "ifend" len(self.code)
 
             elif instr[0] == "IF-ELSE":
-                self.evaluate_condition(instr[1])
+                cond = self.evaluate_condition(instr[1])
                 line = len(self.code) - 1  # line to add jump place
                 self.generate_code(instr[2])
                 self.code.append("JUMP ")
                 # line do add jump to avoid else code
                 line2 = len(self.code) - 1
                 self.code[line] += str(len(self.code))
+                if cond != None:
+                    self.code[cond] += str(len(self.code))
                 self.generate_code(instr[3])
                 self.code[line2] += str(len(self.code))
 
             elif instr[0] == "WHILE":
                 jump_back = len(self.code)
-                self.evaluate_condition(instr[1])
+                cond = self.evaluate_condition(instr[1])
                 line = len(self.code) - 1
                 self.generate_code(instr[2])
                 self.code.append(f"JUMP {jump_back}")
                 self.code[line] += str(len(self.code))
+                if cond != None:
+                    self.code[cond] += str(len(self.code))
 
             elif instr[0] == "REPEAT":
                 jump_back = len(self.code)
                 self.generate_code(instr[1])
-                self.evaluate_condition(instr[2])
+                cond = self.evaluate_condition(instr[2])
                 self.code[-1] += str(jump_back)
+                if cond != None:
+                    self.code[cond] += str(jump_back)
 
     # checks if variable is initialized and throws error otherwise
 
@@ -273,18 +281,28 @@ class CodeGenerator:
                 self.code.append(
                     f"SUB {self.context.memory_offset}")
 
-    # przepisz do funkcji zeby nie powtarzac
     # popraw mnozenie
+    # w EQ zwracam miejsce z ktorego trzeba skoczyc za koniec kodu warunkowego i w obliczaniu IF, IF-ELSE, ... sprawdzam czy evaluate_condition() zwraca None, jesli nie to sprawdzany warunek to EQ i trzeba dodac adres do JUMP
     def evaluate_condition(self, condition):
         if condition[0] == "EQ":
-            pass
+            self.subtract(condition[1:])
+            self.code.append("JPOS ")
+            jump_from1 = len(self.code) - 1
+            self.subtract((condition[1:])[::-1])
+            self.code.append("JPOS ")
+            return jump_from1
         elif condition[0] == "NEQ":
-            pass
+            self.subtract(condition[1:])
+            self.code.append("JPOS ")
+            line = len(self.code) - 1
+            self.subtract((condition[1:])[::-1])
+            self.code.append("JZERO ")
+            self.code[line] += str(len(self.code))
         elif condition[0] == "GT":
             self.subtract(condition[1:])
             self.code.append("JZERO ")
         elif condition[0] == "LT":
-            self.subtract((condition[1:])[::-1])  # reverse arguments
+            self.subtract((condition[1:])[::-1])
             self.code.append("JZERO ")
         elif condition[0] == "GEQ":
             self.subtract((condition[1:])[::-1])

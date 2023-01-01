@@ -104,14 +104,19 @@ class Parser(sly.Parser):
                         f">>> Redeclared variable {var} in line {p.lineno}")
                 else:
                     self.context.get_procedure(
-                        p.proc_head[0]).add_variable(Variable(var))
+                        p.proc_head[0]).add_variable(Variable(var, self.context.memory_offset, True))
+                    self.context.memory_offset += 1
+            self.context.get_procedure(
+                p.proc_head[0]).add_variable(Variable("JUMPVAR", self.context.memory_offset))
+            self.context.memory_offset += 1
             for var in p.declarations:
                 if self.context.get_procedure(p.proc_head[0]).is_variable(var):
                     raise VariableRedeclarationError(
                         f">>> Redeclared variable {var} in line {p.lineno}")
                 else:
                     self.context.get_procedure(
-                        p.proc_head[0]).add_variable(Variable(var))
+                        p.proc_head[0]).add_variable(Variable(var, self.context.memory_offset))
+                    self.context.memory_offset += 1
             self.context.get_procedure(
                 p.proc_head[0]).formal_arguments = len(p.proc_head[1])
         return p.procedures + [(p.proc_head[0], p.commands)]
@@ -131,7 +136,11 @@ class Parser(sly.Parser):
                         f">>> Redeclared variable {var} in line {p.lineno}")
                 else:
                     self.context.get_procedure(
-                        p.proc_head[0]).add_variable(Variable(var))
+                        p.proc_head[0]).add_variable(Variable(var, self.context.memory_offset, True))
+                    self.context.memory_offset += 1
+            self.context.get_procedure(
+                p.proc_head[0]).add_variable(Variable("JUMPVAR", self.context.memory_offset))
+            self.context.memory_offset += 1
             self.context.get_procedure(
                 p.proc_head[0]).formal_arguments = len(p.proc_head[1])
         return p.procedures + [(p.proc_head[0], p.commands)]

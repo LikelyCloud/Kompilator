@@ -4,13 +4,14 @@
 class Variable:
     # name
     # value
-    def __init__(self, name: str, memory_address: int, declared: bool = False):
+    def __init__(self, name: str, memory_address: int, formal: bool = False, declared: bool = False):
         self.name = name
         self.memory_address = memory_address
+        self.formal = formal
         self.declared = declared
 
     def __str__(self):
-        return f"Name: {self.name}, memory_address: {self.memory_address}, declared: {self.declared}"
+        return f"Name: {self.name}, memory_address: {self.memory_address}, formal: {self.formal}, declared: {self.declared}"
 
 
 class Procedure:
@@ -20,6 +21,7 @@ class Procedure:
         self.name = name
         self.variables = []
         self.formal_arguments = 0
+        self.procedure_address = None
 
     def add_variable(self, variable: Variable):
         self.variables.append(variable)
@@ -37,7 +39,7 @@ class Procedure:
         return None
 
     def __str__(self):
-        stringbuilder = f"Procedure {self.name} ({self.formal_arguments}); Variables [ "
+        stringbuilder = f"Procedure {self.name} : {self.procedure_address} ({self.formal_arguments}); Variables [ "
         for var in self.variables:
             stringbuilder += f"({var}) "
         stringbuilder += "]"
@@ -73,7 +75,7 @@ class Context:
     def __str__(self):
         stringbuilder = "Context:\n"
         for proc in self.procedures:
-            stringbuilder += f"Procedure {proc.name} ({proc.formal_arguments}): Variables [ "
+            stringbuilder += f"Procedure {proc.name} : {proc.procedure_address} ({proc.formal_arguments}): Variables [ "
             for var in proc.variables:
                 stringbuilder += f"({var}) "
             stringbuilder += "]\n"

@@ -15,9 +15,23 @@ class CodeGenerator:
     def generate_code(self, instructions: list):
         for instr in instructions:
             if instr[0] == "PROCEDURES":
-                pass
+                self.code.append("JUMP ")
+                for procedure in instr[1]:
+                    self.context.current_procedure = procedure[0]
+                    self.context.get_procedure().procedure_address = len(self.code)
+                    ##############################
+                    # self.code.append(procedure[0])
+                    ##############################
+                    self.generate_code(procedure[1])
+                    self.code.append(
+                        "JUMPI " + str(self.context.get_procedure().get_variable("JUMPVAR").memory_address))
             elif instr[0] == "MAIN":
+                self.code[0] += str(len(self.code))
                 self.context.current_procedure = "MAIN"
+                self.context.get_procedure().procedure_address = len(self.code)
+                ########################
+                # self.code.append("MAIN")
+                ########################
                 self.generate_code(instr[1])
             elif instr[0] == "READ":
                 var = self.context.get_procedure().get_variable(instr[1])
@@ -25,7 +39,11 @@ class CodeGenerator:
                     raise UndeclaredVariableError(
                         f">>> Undeclared variable {instr[1]} in procedure {self.context.current_procedure}")
                 else:
-                    self.code.append(f"GET {var.memory_address}")
+                    if var.formal:
+                        self.code.append("GET 0")
+                        self.code.append(f"STOREI {var.memory_address}")
+                    else:
+                        self.code.append(f"GET {var.memory_address}")
                     var.declared = True
             elif instr[0] == "WRITE":
                 if instr[1][0] == "ID":
@@ -33,7 +51,11 @@ class CodeGenerator:
                     # przemysl czy tu byl blad!!!
                     var = self.context.get_procedure(
                     ).get_variable(instr[1][1])
-                    self.code.append(f"PUT {var.memory_address}")
+                    if var.formal:
+                        self.code.append(f"LOADI {var.memory_address}")
+                        self.code.append("PUT 0")
+                    else:
+                        self.code.append(f"PUT {var.memory_address}")
                     # print(instr, var)
                 elif instr[1][0] == "NUM":
                     self.code.append(f"SET {instr[1][1]}")
@@ -237,6 +259,31 @@ class CodeGenerator:
                 if cond != None:
                     self.code[cond] += str(jump_back)
 
+            elif instr[0] == "PROC_HEAD":
+                # ustawiam wartosc declared na rowna wartosci declared parametru procedury
+                # for index, variable in enumerate(instr[1][1]):
+                #    self.context.get_procedure(instr[1][0]).variables[index].declared = self.context.get_procedure(
+                #    ).get_variable(variable).declared
+                #####################################################
+                for index, variable in enumerate(instr[1][1]):
+                    if self.context.get_procedure().get_variable(variable).formal:
+                        self.code.append(
+                            f"LOAD {self.context.get_procedure().get_variable(variable).memory_address}")
+                        # self.code.append(
+                        #     f"STORE {self.context.get_procedure(instr[1][0]).variables[index].memory_address}")
+                    else:
+                        self.code.append(
+                            f"SET {self.context.get_procedure().get_variable(variable).memory_address}")
+                    self.code.append(
+                        f"STORE {self.context.get_procedure(instr[1][0]).variables[index].memory_address}")
+                self.code.append(f"SET {len(self.code) + 3}")
+                # self.code.append(
+                #    f"STORE {self.context.get_procedure(instr[1][0]).variables[self.context.get_procedure(instr[1][0]).#formal_arguments].memory_address}")
+                self.code.append(
+                    "STORE " + str(self.context.get_procedure(instr[1][0]).get_variable("JUMPVAR").memory_address))
+                self.code.append(
+                    f"JUMP {self.context.get_procedure(instr[1][0]).procedure_address}")
+
     # checks if variable is initialized and throws error otherwise
 
     def check_variable(self, value: str):
@@ -245,9 +292,9 @@ class CodeGenerator:
         if var == None:
             raise UndeclaredVariableError(
                 f">> Undeclared variable {value} in procedure {self.context.current_procedure}")
-        elif not var.declared:
-            raise UninitializedVariableError(
-                f">> Uninitialized variable {value} in procedure {self.context.current_procedure}")
+        # elif not var.declared:
+        #    raise UninitializedVariableError(
+        #        f">> Uninitialized variable {value} in procedure {self.context.current_procedure}")
 
     def subtract(self, elements: list):
         if elements[0][0] == "ID":

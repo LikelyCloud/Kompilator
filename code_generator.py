@@ -85,8 +85,12 @@ class CodeGenerator:
                     if instr[2][0] == "VALUE":
                         if instr[2][1][0] == "ID":
                             self.check_variable(instr[2][1][1])
-                            self.code.append(
-                                f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
+                            if self.context.get_procedure().get_variable(instr[2][1][1]).formal:
+                                self.code.append(
+                                    f"LOADI {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
+                            else:
+                                self.code.append(
+                                    f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
                         elif instr[2][1][0] == "NUM":
                             self.code.append(f"SET {instr[2][1][1]}")
                     elif instr[2][0] == "ADD":
@@ -94,24 +98,44 @@ class CodeGenerator:
                             self.check_variable(instr[2][1][1])
                             if instr[2][2][0] == "ID":
                                 self.check_variable(instr[2][2][1])
-                                self.code.append(
-                                    f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
-                                self.code.append(
-                                    f"ADD {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
+                                if self.context.get_procedure().get_variable(instr[2][1][1]).formal:
+                                    self.code.append(
+                                        f"LOADI {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
+                                else:
+                                    self.code.append(
+                                        f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
+                                # self.code.append(
+                                #    f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
+                                if self.context.get_procedure().get_variable(instr[2][2][1]).formal:
+                                    self.code.append(
+                                        f"ADDI {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
+                                else:
+                                    self.code.append(
+                                        f"ADD {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
+                                # self.code.append(
+                                #    f"ADD {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
                             elif instr[2][2][0] == "NUM":
                                 self.code.append(f"SET {instr[2][2][1]}")
                                 self.code.append(
                                     f"STORE {self.context.memory_offset}")
-                                self.code.append(
-                                    f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
+                                if self.context.get_procedure().get_variable(instr[2][1][1]).formal:
+                                    self.code.append(
+                                        f"LOADI {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
+                                else:
+                                    self.code.append(
+                                        f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
                                 self.code.append(
                                     f"ADD {self.context.memory_offset}")
                         elif instr[2][1][0] == "NUM":
                             if instr[2][2][0] == "ID":
                                 self.check_variable(instr[2][2][1])
                                 self.code.append(f"SET {instr[2][1][1]}")
-                                self.code.append(
-                                    f"ADD {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
+                                if self.context.get_procedure().get_variable(instr[2][2][1]).formal:
+                                    self.code.append(
+                                        f"ADDI {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
+                                else:
+                                    self.code.append(
+                                        f"ADD {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
                             elif instr[2][2][0] == "NUM":
                                 self.code.append(f"SET {instr[2][2][1]}")
                                 self.code.append(
@@ -157,8 +181,12 @@ class CodeGenerator:
                         # x * y -> x w pierwszej wolnej komórce, y w drugiej wolnej, wynik w trzeciej wolnej
                         if instr[2][1][0] == "ID":
                             self.check_variable(instr[2][1][1])
-                            self.code.append(
-                                f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
+                            if self.context.get_procedure().get_variable(instr[2][1][1]).formal:
+                                self.code.append(
+                                    f"LOADI {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
+                            else:
+                                self.code.append(
+                                    f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
                             self.code.append(
                                 f"STORE {self.context.memory_offset}")
                         elif instr[2][1][0] == "NUM":
@@ -167,8 +195,12 @@ class CodeGenerator:
                                 f"STORE {self.context.memory_offset}")
                         if instr[2][2][0] == "ID":
                             self.check_variable(instr[2][2][1])
-                            self.code.append(
-                                f"LOAD {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
+                            if self.context.get_procedure().get_variable(instr[2][2][1]).formal:
+                                self.code.append(
+                                    f"LOADI {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
+                            else:
+                                self.code.append(
+                                    f"LOAD {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
                             self.code.append(
                                 f"STORE {self.context.memory_offset + 1}")
                         elif instr[2][2][0] == "NUM":
@@ -210,12 +242,19 @@ class CodeGenerator:
                             f"LOAD {self.context.memory_offset + 2}")
 
                     elif instr[2][0] == "DIV":
-                        pass
+                        self.divide((instr[2][1], instr[2][2]))
+                        self.code.append(
+                            f"LOAD {self.context.memory_offset + 3}")
                     elif instr[2][0] == "MOD":
-                        pass
+                        self.divide((instr[2][1], instr[2][2]))
+                        self.code.append(
+                            f"LOAD {self.context.memory_offset}")
 
                     var.declared = True
-                    self.code.append(f"STORE {var.memory_address}")
+                    if var.formal:
+                        self.code.append(f"STOREI {var.memory_address}")
+                    else:
+                        self.code.append(f"STORE {var.memory_address}")
 
             elif instr[0] == "IF":
                 cond = self.evaluate_condition(instr[1])
@@ -301,24 +340,40 @@ class CodeGenerator:
             self.check_variable(elements[0][1])
             if elements[1][0] == "ID":
                 self.check_variable(elements[1][1])
-                self.code.append(
-                    f"LOAD {self.context.get_procedure().get_variable(elements[0][1]).memory_address}")
-                self.code.append(
-                    f"SUB {self.context.get_procedure().get_variable(elements[1][1]).memory_address}")
+                if self.context.get_procedure().get_variable(elements[0][1]).formal:
+                    self.code.append(
+                        f"LOADI {self.context.get_procedure().get_variable(elements[0][1]).memory_address}")
+                else:
+                    self.code.append(
+                        f"LOAD {self.context.get_procedure().get_variable(elements[0][1]).memory_address}")
+                if self.context.get_procedure().get_variable(elements[1][1]).formal:
+                    self.code.append(
+                        f"SUBI {self.context.get_procedure().get_variable(elements[1][1]).memory_address}")
+                else:
+                    self.code.append(
+                        f"SUB {self.context.get_procedure().get_variable(elements[1][1]).memory_address}")
             elif elements[1][0] == "NUM":
                 self.code.append(f"SET {elements[1][1]}")
                 self.code.append(
                     f"STORE {self.context.memory_offset}")
-                self.code.append(
-                    f"LOAD {self.context.get_procedure().get_variable(elements[0][1]).memory_address}")
+                if self.context.get_procedure().get_variable(elements[0][1]).formal:
+                    self.code.append(
+                        f"LOADI {self.context.get_procedure().get_variable(elements[0][1]).memory_address}")
+                else:
+                    self.code.append(
+                        f"LOAD {self.context.get_procedure().get_variable(elements[0][1]).memory_address}")
                 self.code.append(
                     f"SUB {self.context.memory_offset}")
         elif elements[0][0] == "NUM":
             if elements[1][0] == "ID":
                 self.check_variable(elements[1][1])
                 self.code.append(f"SET {elements[0][1]}")
-                self.code.append(
-                    f"SUB {self.context.get_procedure().get_variable(elements[1][1]).memory_address}")
+                if self.context.get_procedure().get_variable(elements[1][1]).formal:
+                    self.code.append(
+                        f"SUBI {self.context.get_procedure().get_variable(elements[1][1]).memory_address}")
+                else:
+                    self.code.append(
+                        f"SUB {self.context.get_procedure().get_variable(elements[1][1]).memory_address}")
             elif elements[1][0] == "NUM":
                 self.code.append(f"SET {elements[1][1]}")
                 self.code.append(
@@ -328,8 +383,76 @@ class CodeGenerator:
                 self.code.append(
                     f"SUB {self.context.memory_offset}")
 
+    def divide(self, elements: list):
+        if elements[0][0] == "ID":
+            self.check_variable(elements[0][1])
+            if self.context.get_procedure().get_variable(elements[0][1]).formal:
+                self.code.append(
+                    f"LOADI {self.context.get_procedure().get_variable(elements[0][1]).memory_address}")
+            else:
+                self.code.append(
+                    f"LOAD {self.context.get_procedure().get_variable(elements[0][1]).memory_address}")
+            self.code.append(
+                f"STORE {self.context.memory_offset}")
+        elif elements[0][0] == "NUM":
+            self.code.append(f"SET {elements[0][1]}")
+            self.code.append(
+                f"STORE {self.context.memory_offset}")
+        if elements[1][0] == "ID":
+            self.check_variable(elements[1][1])
+            if self.context.get_procedure().get_variable(elements[1][1]).formal:
+                self.code.append(
+                    f"LOADI {self.context.get_procedure().get_variable(elements[1][1]).memory_address}")
+            else:
+                self.code.append(
+                    f"LOAD {self.context.get_procedure().get_variable(elements[1][1]).memory_address}")
+            self.code.append(
+                f"STORE {self.context.memory_offset + 1}")
+            self.code.append(
+                f"STORE {self.context.memory_offset + 2}")
+        elif elements[1][0] == "NUM":
+            self.code.append(f"SET {elements[1][1]}")
+            self.code.append(
+                f"STORE {self.context.memory_offset + 1}")
+            self.code.append(
+                f"STORE {self.context.memory_offset + 2}")
+        self.code.append("SET 0")
+        self.code.append(
+            f"STORE {self.context.memory_offset + 3}")
+
+        self.code.append(f"LOAD {self.context.memory_offset + 1}")
+        self.code.append(f"SUB {self.context.memory_offset}")
+        self.code.append(f"JPOS {len(self.code) + 5}")
+        self.code.append(f"LOAD {self.context.memory_offset + 1}")
+        self.code.append("ADD 0")
+        self.code.append(f"STORE {self.context.memory_offset + 1}")
+        self.code.append(f"JUMP {len(self.code) - 6}")
+        self.code.append(f"LOAD {self.context.memory_offset + 1}")
+        self.code.append("HALF")
+        self.code.append(f"STORE {self.context.memory_offset + 1}")
+        self.code.append(f"LOAD {self.context.memory_offset + 2}")
+        self.code.append(f"SUB {self.context.memory_offset + 1}")
+        self.code.append(f"JPOS {len(self.code) + 17}")
+        self.code.append(f"LOAD {self.context.memory_offset + 3}")
+        self.code.append("ADD 0")
+        self.code.append(f"STORE {self.context.memory_offset + 3}")
+        self.code.append(f"LOAD {self.context.memory_offset + 1}")
+        self.code.append(f"SUB {self.context.memory_offset}")
+        self.code.append(f"JPOS {len(self.code) + 7}")
+        self.code.append("SET 1")
+        self.code.append(f"ADD {self.context.memory_offset + 3}")
+        self.code.append(f"STORE {self.context.memory_offset + 3}")
+        self.code.append(f"LOAD {self.context.memory_offset}")
+        self.code.append(f"SUB {self.context.memory_offset + 1}")
+        self.code.append(f"STORE {self.context.memory_offset}")
+        self.code.append(f"LOAD {self.context.memory_offset + 1}")
+        self.code.append("HALF")
+        self.code.append(f"STORE {self.context.memory_offset + 1}")
+        self.code.append(f"JUMP {len(self.code) - 18}")
+
     # popraw mnozenie
     # w EQ zwracam miejsce z ktorego trzeba skoczyc za koniec kodu warunkowego i w obliczaniu IF, IF-ELSE, ... sprawdzam czy evaluate_condition() zwraca None, jesli nie to sprawdzany warunek to EQ i trzeba dodac adres do JUMP
+
     def evaluate_condition(self, condition):
         if condition[0] == "EQ":
             self.subtract(condition[1:])

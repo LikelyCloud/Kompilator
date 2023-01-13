@@ -10,6 +10,7 @@ class Variable:
         self.formal = formal
         self.declared = declared
         self.used = False
+        #self.value = None
 
     def __str__(self):
         return f"Name: {self.name}, memory_address: {self.memory_address}, formal: {self.formal}, declared: {self.declared}, used: {self.used}"
@@ -54,6 +55,7 @@ class Context:
         self.current_procedure = ""
         self.memory_offset = 1
         self.loop_depth = 0
+        # self.acc = None  # accumulator value
 
     def add_procedure(self, proc: Procedure):
         self.procedures.append(proc)

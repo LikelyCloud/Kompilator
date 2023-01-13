@@ -1,5 +1,6 @@
 from context import Context
 from exceptions import UndeclaredVariableError, UninitializedVariableError
+import itertools
 
 
 class CodeGenerator:
@@ -7,6 +8,7 @@ class CodeGenerator:
         self.instructions = instructions
         self.context = context
         self.code = []
+        self.delete_unused_procedures()
         self.generate_code(self.instructions)
         self.code.append("HALT")
         print(self.instructions)
@@ -16,6 +18,7 @@ class CodeGenerator:
         for instr in instructions:
             if instr[0] == "PROCEDURES":
                 for procedure in instr[1]:
+                    # do zmiany: po prostu sprawdz czy sa jakies procedury (nieuzyte beda juz usuniete z ast)
                     if self.context.get_procedure(procedure[0]).used:
                         if self.code == []:
                             self.code.append("JUMP ")
@@ -40,6 +43,8 @@ class CodeGenerator:
                 else:
                     if var.formal:
                         self.code.append("GET 0")
+                        # self.context.acc = None  # undefined value
+                        # print(f"WAR {var}")
                         self.code.append(f"STOREI {var.memory_address}")
                     else:
                         self.code.append(f"GET {var.memory_address}")
@@ -69,8 +74,10 @@ class CodeGenerator:
                         if instr[2][1][0] == "ID":
                             self.check_variable(instr[2][1][1])
                             self.load_variable(instr[2][1][1])
+                            # if self.context
                         elif instr[2][1][0] == "NUM":
                             self.code.append(f"SET {instr[2][1][1]}")
+                            # var.value = instr[2][1][1]
 
                     elif instr[2][0] == "ADD":
                         if instr[2][1][0] == "ID":
@@ -419,3 +426,42 @@ class CodeGenerator:
         elif condition[0] == "LEQ":
             self.subtract(condition[1:])
             self.code.append("JPOS ")
+
+    def delete_unused_procedures(self):
+        # nazwy wszystkich procedur
+        proc_names = [proc.name for proc in self.context.procedures[:-1]]
+
+        proc_queue = []  # tu beda dodawane procedury wykonane, by sprawdzic jakie w nich beda wykonane procedury
+        # wielokrotnie splaszczone ast w main
+        main = self.flatten_ast(self.instructions[1][1], [])
+        for proc in proc_names:
+            if proc in main:
+                self.context.get_procedure(
+                    proc).used = True  # uzyto danej procedury
+                # dodano procedure by sprawdzic czy w niej sa wywolane inne procedury
+                proc_queue.append(proc)
+                # usunieto procedure by jej dalej nie rozpatrywac
+                proc_names.remove(proc)
+
+        proc_queue = list(dict.fromkeys(proc_queue))  # get unique names
+
+        for proc_to_search in proc_queue:
+            proc_instr = list(
+                filter(lambda body: body[0] == proc_to_search, self.instructions[0][1]))[0][1]  # ast wewnatrz procedury
+            flat_proc = self.flatten_ast(proc_instr, [])
+            for proc in proc_names:
+                if proc in flat_proc:
+                    self.context.get_procedure(
+                        proc).used = True  # uzyto danej procedury
+                    # dodano procedure by sprawdzic czy w niej sa wywolane inne procedury
+                    proc_queue.append(proc)
+                    # usunieto procedure by jej dalej nie rozpatrywac
+                    proc_names.remove(proc)
+
+    def flatten_ast(self, ast, flattened=[]):
+        for elem in ast:
+            if isinstance(elem, int) or isinstance(elem, str):
+                flattened.append(elem)
+            else:
+                self.flatten_ast(elem, flattened)
+        return flattened

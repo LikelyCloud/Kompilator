@@ -203,10 +203,8 @@ class Parser(sly.Parser):
             raise ArgumentsProcedureError(
                 f">>> Incorrect number of arguments in procedure {p.proc_head[0]} in line {p.lineno}")
         # zakladam ze wszyskie zmienne przekazane do fuknkcji (nawet te niezainicjalizowane) po wyjsciu beda zainicjalizowane
-        #print(f"Proc name: {p.proc_head[0]} ({self.context.get_procedure(p.proc_head[0])})")
-        # for var in p.proc_head[1]:
-        #    print(var)
-        self.context.get_procedure(p.proc_head[0]).used = True
+
+        #self.context.get_procedure(p.proc_head[0]).used = True
         return "PROC_HEAD", p.proc_head
 
     @ _('READ ID SEMICOLON')

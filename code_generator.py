@@ -315,6 +315,8 @@ class CodeGenerator:
                             f"SET {self.context.get_procedure().get_variable(variable).memory_address}")
                     self.code.append(
                         f"STORE {self.context.get_procedure(instr[1][0]).variables[index].memory_address}")
+                    # ustaw wszystkie zmienne przekazane jako parametry jako zainicjalizowane
+                    self.context.get_procedure().get_variable(variable).declared = True
                 self.code.append(f"SET {len(self.code) + 3}")
                 # self.code.append(
                 #    f"STORE {self.context.get_procedure(instr[1][0]).variables[self.context.get_procedure(instr[1][0]).#formal_arguments].memory_address}")
@@ -331,9 +333,9 @@ class CodeGenerator:
         if var == None:
             raise UndeclaredVariableError(
                 f">> Undeclared variable {value} in procedure {self.context.current_procedure}")
-        # elif not var.declared:
-        #    raise UninitializedVariableError(
-        #        f">> Uninitialized variable {value} in procedure {self.context.current_procedure}")
+        elif not var.declared:
+            raise UninitializedVariableError(
+                f">> Uninitialized variable {value} in procedure {self.context.current_procedure}")
 
     def subtract(self, elements: list):
         if elements[0][0] == "ID":

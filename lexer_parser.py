@@ -104,7 +104,7 @@ class Parser(sly.Parser):
                         f">>> Redeclared variable {var} in line {p.lineno}")
                 else:
                     self.context.get_procedure(
-                        p.proc_head[0]).add_variable(Variable(var, self.context.memory_offset, True))
+                        p.proc_head[0]).add_variable(Variable(var, self.context.memory_offset, True, True))
                     self.context.memory_offset += 1
             self.context.get_procedure(
                 p.proc_head[0]).add_variable(Variable("JUMPVAR", self.context.memory_offset))
@@ -136,7 +136,7 @@ class Parser(sly.Parser):
                         f">>> Redeclared variable {var} in line {p.lineno}")
                 else:
                     self.context.get_procedure(
-                        p.proc_head[0]).add_variable(Variable(var, self.context.memory_offset, True))
+                        p.proc_head[0]).add_variable(Variable(var, self.context.memory_offset, True, True))
                     self.context.memory_offset += 1
             self.context.get_procedure(
                 p.proc_head[0]).add_variable(Variable("JUMPVAR", self.context.memory_offset))
@@ -202,6 +202,10 @@ class Parser(sly.Parser):
         if self.context.get_procedure(p.proc_head[0]).formal_arguments != len(p.proc_head[1]):
             raise ArgumentsProcedureError(
                 f">>> Incorrect number of arguments in procedure {p.proc_head[0]} in line {p.lineno}")
+        # zakladam ze wszyskie zmienne przekazane do fuknkcji (nawet te niezainicjalizowane) po wyjsciu beda zainicjalizowane
+        # print(f"Proc name: {p.proc_head[0]} ({self.context.get_procedure()})")
+        # for var in p.proc_head[1]:
+        #    print(var)
         return "PROC_HEAD", p.proc_head
 
     @ _('READ ID SEMICOLON')
@@ -216,6 +220,10 @@ class Parser(sly.Parser):
     def proc_head(self, p):
         # self.context.current_procedure = p.ID
         # print(self.context.current_procedure)
+        #print(f"Proc head:{p.ID}")
+        # for var in p.declarations:
+        # print(var)
+        #self.context.get_procedure(p.ID).get_variable(var).declared = True
         return p.ID, p.declarations
 
     @ _('declarations COMMA ID')

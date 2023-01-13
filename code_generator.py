@@ -24,15 +24,14 @@ class CodeGenerator:
                         self.generate_code(procedure[1])
                         self.code.append(
                             "JUMPI " + str(self.context.get_procedure().get_variable("JUMPVAR").memory_address))
+
             elif instr[0] == "MAIN":
                 if self.code != []:
                     self.code[0] += str(len(self.code))
                 self.context.current_procedure = "MAIN"
                 self.context.get_procedure().procedure_address = len(self.code)
-                ########################
-                # self.code.append("MAIN")
-                ########################
                 self.generate_code(instr[1])
+
             elif instr[0] == "READ":
                 var = self.context.get_procedure().get_variable(instr[1])
                 if var == None:
@@ -45,10 +44,10 @@ class CodeGenerator:
                     else:
                         self.code.append(f"GET {var.memory_address}")
                     var.declared = True
+
             elif instr[0] == "WRITE":
                 if instr[1][0] == "ID":
                     self.check_variable(instr[1][1])
-                    # przemysl czy tu byl blad!!!
                     var = self.context.get_procedure(
                     ).get_variable(instr[1][1])
                     if var.formal:
@@ -56,26 +55,10 @@ class CodeGenerator:
                         self.code.append("PUT 0")
                     else:
                         self.code.append(f"PUT {var.memory_address}")
-                    # print(instr, var)
                 elif instr[1][0] == "NUM":
                     self.code.append(f"SET {instr[1][1]}")
                     self.code.append(f"PUT 0")
-                """
-                if instr[1][0] == "ID":
-                    var = self.context.get_procedure(
-                    ).get_variable(instr[1][1])
-                    if var == None:
-                        raise UndeclaredVariableError(
-                            f">> Undeclared variable {instr[1][1]} in procedure {self.context.current_procedure}")
-                    elif not var.declared:
-                        raise UninitializedVariableError(
-                            f">> Uninitialized variable {instr[1][1]} in procedure {self.context.current_procedure}")
-                    else:
-                        self.code.append(f"PUT {var.memory_address}")
-                elif instr[1][0] == "NUM":
-                    self.code.append(f"SET {instr[1][1]}")
-                    self.code.append(f"PUT 0")
-                """
+
             elif instr[0] == "ASSIGN":
                 var = self.context.get_procedure().get_variable(instr[1])
                 if var == None:
@@ -85,97 +68,32 @@ class CodeGenerator:
                     if instr[2][0] == "VALUE":
                         if instr[2][1][0] == "ID":
                             self.check_variable(instr[2][1][1])
-                            if self.context.get_procedure().get_variable(instr[2][1][1]).formal:
-                                self.code.append(
-                                    f"LOADI {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
-                            else:
-                                self.code.append(
-                                    f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
+                            self.load_variable(instr[2][1][1])
                         elif instr[2][1][0] == "NUM":
                             self.code.append(f"SET {instr[2][1][1]}")
+
                     elif instr[2][0] == "ADD":
                         if instr[2][1][0] == "ID":
                             self.check_variable(instr[2][1][1])
-                            if instr[2][2][0] == "ID":
+                            if instr[2][2][0] == "ID":  # ID + ID
                                 self.check_variable(instr[2][2][1])
-                                if self.context.get_procedure().get_variable(instr[2][1][1]).formal:
-                                    self.code.append(
-                                        f"LOADI {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
-                                else:
-                                    self.code.append(
-                                        f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
-                                # self.code.append(
-                                #    f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
-                                if self.context.get_procedure().get_variable(instr[2][2][1]).formal:
-                                    self.code.append(
-                                        f"ADDI {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
-                                else:
-                                    self.code.append(
-                                        f"ADD {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
-                                # self.code.append(
-                                #    f"ADD {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
-                            elif instr[2][2][0] == "NUM":
+                                self.load_variable(instr[2][1][1])
+                                self.add_variable(instr[2][2][1])
+                            elif instr[2][2][0] == "NUM":  # ID + NUM
                                 self.code.append(f"SET {instr[2][2][1]}")
-                                self.code.append(
-                                    f"STORE {self.context.memory_offset}")
-                                if self.context.get_procedure().get_variable(instr[2][1][1]).formal:
-                                    self.code.append(
-                                        f"LOADI {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
-                                else:
-                                    self.code.append(
-                                        f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
-                                self.code.append(
-                                    f"ADD {self.context.memory_offset}")
+                                self.add_variable(instr[2][1][1])
                         elif instr[2][1][0] == "NUM":
-                            if instr[2][2][0] == "ID":
+                            if instr[2][2][0] == "ID":  # NUM + ID
                                 self.check_variable(instr[2][2][1])
                                 self.code.append(f"SET {instr[2][1][1]}")
-                                if self.context.get_procedure().get_variable(instr[2][2][1]).formal:
-                                    self.code.append(
-                                        f"ADDI {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
-                                else:
-                                    self.code.append(
-                                        f"ADD {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
-                            elif instr[2][2][0] == "NUM":
-                                self.code.append(f"SET {instr[2][2][1]}")
+                                self.add_variable(instr[2][2][1])
+                            elif instr[2][2][0] == "NUM":  # NUM + NUM
                                 self.code.append(
-                                    f"STORE {self.context.memory_offset}")
-                                self.code.append(
-                                    f"SET {instr[2][1][1]}")
-                                self.code.append(
-                                    f"ADD {self.context.memory_offset}")
+                                    f"SET {instr[2][1][1] + instr[2][2][1]}")
+
                     elif instr[2][0] == "SUB":
                         self.subtract((instr[2][1], instr[2][2]))
-                        """if instr[2][1][0] == "ID":
-                            self.check_variable(instr[2][1][1])
-                            if instr[2][2][0] == "ID":
-                                self.check_variable(instr[2][2][1])
-                                self.code.append(
-                                    f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
-                                self.code.append(
-                                    f"SUB {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
-                            elif instr[2][2][0] == "NUM":
-                                self.code.append(f"SET {instr[2][2][1]}")
-                                self.code.append(
-                                    f"STORE {self.context.memory_offset}")
-                                self.code.append(
-                                    f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
-                                self.code.append(
-                                    f"SUB {self.context.memory_offset}")
-                        elif instr[2][1][0] == "NUM":
-                            if instr[2][2][0] == "ID":
-                                self.check_variable(instr[2][2][1])
-                                self.code.append(f"SET {instr[2][1][1]}")
-                                self.code.append(
-                                    f"SUB {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
-                            elif instr[2][2][0] == "NUM":
-                                self.code.append(f"SET {instr[2][2][1]}")
-                                self.code.append(
-                                    f"STORE {self.context.memory_offset}")
-                                self.code.append(
-                                    f"SET {instr[2][1][1]}")
-                                self.code.append(
-                                    f"SUB {self.context.memory_offset}")"""
+
                     elif instr[2][0] == "MUL":
                         # do poprawy
                         # x * y -> x w pierwszej wolnej komórce, y w drugiej wolnej, wynik w trzeciej wolnej
@@ -341,7 +259,7 @@ class CodeGenerator:
                 self.code.append(
                     f"JUMP {self.context.get_procedure(instr[1][0]).procedure_address}")
 
-    # checks if variable is initialized and throws error otherwise
+    # sprawdza czy zmienna jest zadeklarowana i zainicjalizowana
 
     def check_variable(self, value: str):
         var = self.context.get_procedure(
@@ -357,53 +275,52 @@ class CodeGenerator:
             print(
                 f">> Warning (possibly uninitialized variable {value} in procedure {self.context.current_procedure})")
 
+    def load_variable(self, var: str):
+        if self.context.get_procedure().get_variable(var).formal:
+            self.code.append(
+                f"LOADI {self.context.get_procedure().get_variable(var).memory_address}")
+        else:
+            self.code.append(
+                f"LOAD {self.context.get_procedure().get_variable(var).memory_address}")
+
+    def add_variable(self, var: str):
+        if self.context.get_procedure().get_variable(var).formal:
+            self.code.append(
+                f"ADDI {self.context.get_procedure().get_variable(var).memory_address}")
+        else:
+            self.code.append(
+                f"ADD {self.context.get_procedure().get_variable(var).memory_address}")
+
+    def sub_variable(self, var: str):
+        if self.context.get_procedure().get_variable(var).formal:
+            self.code.append(
+                f"SUBI {self.context.get_procedure().get_variable(var).memory_address}")
+        else:
+            self.code.append(
+                f"SUB {self.context.get_procedure().get_variable(var).memory_address}")
+
     def subtract(self, elements: list):
         if elements[0][0] == "ID":
             self.check_variable(elements[0][1])
-            if elements[1][0] == "ID":
+            if elements[1][0] == "ID":  # ID - ID
                 self.check_variable(elements[1][1])
-                if self.context.get_procedure().get_variable(elements[0][1]).formal:
-                    self.code.append(
-                        f"LOADI {self.context.get_procedure().get_variable(elements[0][1]).memory_address}")
-                else:
-                    self.code.append(
-                        f"LOAD {self.context.get_procedure().get_variable(elements[0][1]).memory_address}")
-                if self.context.get_procedure().get_variable(elements[1][1]).formal:
-                    self.code.append(
-                        f"SUBI {self.context.get_procedure().get_variable(elements[1][1]).memory_address}")
-                else:
-                    self.code.append(
-                        f"SUB {self.context.get_procedure().get_variable(elements[1][1]).memory_address}")
-            elif elements[1][0] == "NUM":
+                self.load_variable(elements[0][1])
+                self.sub_variable(elements[1][1])
+            elif elements[1][0] == "NUM":  # ID - NUM
                 self.code.append(f"SET {elements[1][1]}")
                 self.code.append(
                     f"STORE {self.context.memory_offset}")
-                if self.context.get_procedure().get_variable(elements[0][1]).formal:
-                    self.code.append(
-                        f"LOADI {self.context.get_procedure().get_variable(elements[0][1]).memory_address}")
-                else:
-                    self.code.append(
-                        f"LOAD {self.context.get_procedure().get_variable(elements[0][1]).memory_address}")
+                self.load_variable(elements[0][1])
                 self.code.append(
                     f"SUB {self.context.memory_offset}")
         elif elements[0][0] == "NUM":
-            if elements[1][0] == "ID":
+            if elements[1][0] == "ID":  # NUM - ID
                 self.check_variable(elements[1][1])
                 self.code.append(f"SET {elements[0][1]}")
-                if self.context.get_procedure().get_variable(elements[1][1]).formal:
-                    self.code.append(
-                        f"SUBI {self.context.get_procedure().get_variable(elements[1][1]).memory_address}")
-                else:
-                    self.code.append(
-                        f"SUB {self.context.get_procedure().get_variable(elements[1][1]).memory_address}")
-            elif elements[1][0] == "NUM":
-                self.code.append(f"SET {elements[1][1]}")
+                self.sub_variable(elements[1][1])
+            elif elements[1][0] == "NUM":  # NUM - NUM
                 self.code.append(
-                    f"STORE {self.context.memory_offset}")
-                self.code.append(
-                    f"SET {elements[0][1]}")
-                self.code.append(
-                    f"SUB {self.context.memory_offset}")
+                    f"SET {max(elements[0][1] - elements[1][1],0)}")
 
     def divide(self, elements: list):
         if elements[0][0] == "ID":

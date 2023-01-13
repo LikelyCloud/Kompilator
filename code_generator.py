@@ -9,24 +9,24 @@ class CodeGenerator:
         self.code = []
         self.generate_code(self.instructions)
         self.code.append("HALT")
-        # print(self.instructions)
-        # print(self.context)
+        print(self.instructions)
+        print(self.context)
 
     def generate_code(self, instructions: list):
         for instr in instructions:
             if instr[0] == "PROCEDURES":
-                self.code.append("JUMP ")
                 for procedure in instr[1]:
-                    self.context.current_procedure = procedure[0]
-                    self.context.get_procedure().procedure_address = len(self.code)
-                    ##############################
-                    # self.code.append(procedure[0])
-                    ##############################
-                    self.generate_code(procedure[1])
-                    self.code.append(
-                        "JUMPI " + str(self.context.get_procedure().get_variable("JUMPVAR").memory_address))
+                    if self.context.get_procedure(procedure[0]).used:
+                        if self.code == []:
+                            self.code.append("JUMP ")
+                        self.context.current_procedure = procedure[0]
+                        self.context.get_procedure().procedure_address = len(self.code)
+                        self.generate_code(procedure[1])
+                        self.code.append(
+                            "JUMPI " + str(self.context.get_procedure().get_variable("JUMPVAR").memory_address))
             elif instr[0] == "MAIN":
-                self.code[0] += str(len(self.code))
+                if self.code != []:
+                    self.code[0] += str(len(self.code))
                 self.context.current_procedure = "MAIN"
                 self.context.get_procedure().procedure_address = len(self.code)
                 ########################

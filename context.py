@@ -23,6 +23,7 @@ class Procedure:
         self.variables = []
         self.formal_arguments = 0
         self.procedure_address = None
+        self.used = False
 
     def add_variable(self, variable: Variable):
         self.variables.append(variable)
@@ -40,7 +41,7 @@ class Procedure:
         return None
 
     def __str__(self):
-        stringbuilder = f"Procedure {self.name} : {self.procedure_address} ({self.formal_arguments}); Variables [ "
+        stringbuilder = f"Procedure {self.name} ({self.used}) : {self.procedure_address} ({self.formal_arguments}); Variables [ "
         for var in self.variables:
             stringbuilder += f"({var}) "
         stringbuilder += "]"
@@ -77,7 +78,7 @@ class Context:
     def __str__(self):
         stringbuilder = "Context:\n"
         for proc in self.procedures:
-            stringbuilder += f"Procedure {proc.name} : {proc.procedure_address} ({proc.formal_arguments}): Variables [ "
+            stringbuilder += f"Procedure {proc.name} ({proc.used}) : {proc.procedure_address} ({proc.formal_arguments}): Variables [ "
             for var in proc.variables:
                 stringbuilder += f"({var}) "
             stringbuilder += "]\n"

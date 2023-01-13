@@ -9,8 +9,8 @@ class CodeGenerator:
         self.code = []
         self.generate_code(self.instructions)
         self.code.append("HALT")
-        print(self.instructions)
-        print(self.context)
+        # print(self.instructions)
+        # print(self.context)
 
     def generate_code(self, instructions: list):
         for instr in instructions:
@@ -281,6 +281,7 @@ class CodeGenerator:
                 self.code[line2] += str(len(self.code))
 
             elif instr[0] == "WHILE":
+                self.context.loop_depth += 1
                 jump_back = len(self.code)
                 cond = self.evaluate_condition(instr[1])
                 line = len(self.code) - 1
@@ -289,14 +290,29 @@ class CodeGenerator:
                 self.code[line] += str(len(self.code))
                 if cond != None:
                     self.code[cond] += str(len(self.code))
+                self.context.loop_depth -= 1
+                if self.context.loop_depth == 0:
+                    undeclared = list(filter(
+                        lambda var: var.used == True and var.declared == False, self.context.get_procedure().variables))
+                    if undeclared != []:
+                        raise UninitializedVariableError(
+                            f">> Uninitialized variable {undeclared[0].name} in procedure {self.context.current_procedure}")
 
             elif instr[0] == "REPEAT":
+                self.context.loop_depth += 1
                 jump_back = len(self.code)
                 self.generate_code(instr[1])
                 cond = self.evaluate_condition(instr[2])
                 self.code[-1] += str(jump_back)
                 if cond != None:
                     self.code[cond] += str(jump_back)
+                self.context.loop_depth -= 1
+                if self.context.loop_depth == 0:
+                    undeclared = list(filter(
+                        lambda var: var.used == True and var.declared == False, self.context.get_procedure().variables))
+                    if undeclared != []:
+                        raise UninitializedVariableError(
+                            f">> Uninitialized variable {undeclared[0].name} in procedure {self.context.current_procedure}")
 
             elif instr[0] == "PROC_HEAD":
                 # ustawiam wartosc declared na rowna wartosci declared parametru procedury
@@ -334,8 +350,12 @@ class CodeGenerator:
             raise UndeclaredVariableError(
                 f">> Undeclared variable {value} in procedure {self.context.current_procedure}")
         elif not var.declared:
-            raise UninitializedVariableError(
-                f">> Uninitialized variable {value} in procedure {self.context.current_procedure}")
+            if self.context.loop_depth == 0:
+                raise UninitializedVariableError(
+                    f">> Uninitialized variable {value} in procedure {self.context.current_procedure}")
+            var.used = True
+            print(
+                f">> Warning (possibly uninitialized variable {value} in procedure {self.context.current_procedure})")
 
     def subtract(self, elements: list):
         if elements[0][0] == "ID":

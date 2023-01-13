@@ -9,9 +9,10 @@ class Variable:
         self.memory_address = memory_address
         self.formal = formal
         self.declared = declared
+        self.used = False
 
     def __str__(self):
-        return f"Name: {self.name}, memory_address: {self.memory_address}, formal: {self.formal}, declared: {self.declared}"
+        return f"Name: {self.name}, memory_address: {self.memory_address}, formal: {self.formal}, declared: {self.declared}, used: {self.used}"
 
 
 class Procedure:
@@ -51,6 +52,7 @@ class Context:
         self.procedures = []
         self.current_procedure = ""
         self.memory_offset = 1
+        self.loop_depth = 0
 
     def add_procedure(self, proc: Procedure):
         self.procedures.append(proc)

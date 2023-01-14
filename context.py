@@ -10,10 +10,10 @@ class Variable:
         self.formal = formal
         self.declared = declared
         self.used = False
-        #self.value = None
+        self.value = None
 
     def __str__(self):
-        return f"Name: {self.name}, memory_address: {self.memory_address}, formal: {self.formal}, declared: {self.declared}, used: {self.used}"
+        return f"Name: {self.name}, memory_address: {self.memory_address}, formal: {self.formal}, declared: {self.declared}, used: {self.used}, value {self.value}"
 
 
 class Procedure:

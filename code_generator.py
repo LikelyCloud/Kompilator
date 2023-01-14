@@ -1,6 +1,5 @@
-from context import Context
+from context import Context, Variable
 from exceptions import UndeclaredVariableError, UninitializedVariableError
-import itertools
 
 
 class CodeGenerator:
@@ -74,35 +73,71 @@ class CodeGenerator:
                         if instr[2][1][0] == "ID":
                             self.check_variable(instr[2][1][1])
                             self.load_variable(instr[2][1][1])
-                            # if self.context
+                            # zapamietaj wartosc var (None jesli nie znamy wartosci ID)
+                            var.value = self.context.get_procedure(
+                            ).get_variable(instr[2][1][1]).value
+                            #
                         elif instr[2][1][0] == "NUM":
                             self.code.append(f"SET {instr[2][1][1]}")
-                            # var.value = instr[2][1][1]
+                            # zapamietaj wartosc var
+                            var.value = instr[2][1][1]
+                            #
 
                     elif instr[2][0] == "ADD":
                         if instr[2][1][0] == "ID":
                             self.check_variable(instr[2][1][1])
                             if instr[2][2][0] == "ID":  # ID + ID
                                 self.check_variable(instr[2][2][1])
-                                self.load_variable(instr[2][1][1])
-                                self.add_variable(instr[2][2][1])
+                                val1 = self.context.get_procedure(
+                                ).get_variable(instr[2][1][1]).value
+                                val2 = self.context.get_procedure(
+                                ).get_variable(instr[2][2][1]).value
+                                if val1 != None and val2 != None:
+                                    self.code.append(
+                                        f"SET {val1 + val2}")
+                                    # wartosc var to ID.value + ID.value
+                                    var.value = val1 + val2
+                                else:
+                                    self.load_variable(instr[2][1][1])
+                                    self.add_variable(instr[2][2][1])
+                                    var.value = None
                             elif instr[2][2][0] == "NUM":  # ID + NUM
-                                self.code.append(f"SET {instr[2][2][1]}")
-                                self.add_variable(instr[2][1][1])
+                                val1 = self.context.get_procedure(
+                                ).get_variable(instr[2][1][1]).value
+                                if val1 != None:
+                                    self.code.append(
+                                        f"SET {val1 + instr[2][2][1]}")
+                                    # wartosc var to NUM + ID.value jesli istnieje
+                                    var.value = val1 + instr[2][2][1]
+                                else:
+                                    self.code.append(f"SET {instr[2][2][1]}")
+                                    self.add_variable(instr[2][1][1])
+                                    var.value = None
                         elif instr[2][1][0] == "NUM":
                             if instr[2][2][0] == "ID":  # NUM + ID
                                 self.check_variable(instr[2][2][1])
-                                self.code.append(f"SET {instr[2][1][1]}")
-                                self.add_variable(instr[2][2][1])
+                                val2 = self.context.get_procedure(
+                                ).get_variable(instr[2][2][1]).value
+                                if val2 != None:
+                                    self.code.append(
+                                        f"SET {instr[2][1][1] + val2}")
+                                    # wartosc var to NUM + ID.value jesli istnieje
+                                    var.value = instr[2][1][1] + val2
+                                else:
+                                    self.code.append(f"SET {instr[2][1][1]}")
+                                    self.add_variable(instr[2][2][1])
+                                    var.value = None
                             elif instr[2][2][0] == "NUM":  # NUM + NUM
                                 self.code.append(
                                     f"SET {instr[2][1][1] + instr[2][2][1]}")
+                                # wartosc var to NUM + NUM
+                                var.value = instr[2][1][1] + instr[2][2][1]
 
                     elif instr[2][0] == "SUB":
-                        self.subtract((instr[2][1], instr[2][2]))
+                        self.subtract((instr[2][1], instr[2][2]), var)
 
                     elif instr[2][0] == "MUL":
-                        if instr[2][1][0] == "ID":
+                        """if instr[2][1][0] == "ID":
                             self.check_variable(instr[2][1][1])
                             if instr[2][2][0] == "ID":  # ID * ID
                                 self.check_variable(instr[2][2][1])
@@ -136,6 +171,13 @@ class CodeGenerator:
                                         else:
                                             self.code.append(
                                                 f"LOAD {self.context.memory_offset+1}")
+                                            for _ in range(0, zeroes_counter):
+                                                self.code.append("ADD 0")
+                                            self.code.append(
+                                                f"ADD {self.context.memory_offset}")
+                                            self.code.append(
+                                                f"STORE {self.context.memory_offset}")
+                                            zeroes_counter = 1
 
                         elif instr[2][1][0] == "NUM":
                             if instr[2][2][0] == "ID":  # NUM * ID
@@ -144,10 +186,10 @@ class CodeGenerator:
                                 self.add_variable(instr[2][2][1])
                             elif instr[2][2][0] == "NUM":  # NUM * NUM
                                 self.code.append(
-                                    f"SET {instr[2][1][1] * instr[2][2][1]}")
+                                    f"SET {instr[2][1][1] * instr[2][2][1]}")"""
                         # do poprawy
                         # x * y -> x w pierwszej wolnej komórce, y w drugiej wolnej, wynik w trzeciej wolnej
-                        """if instr[2][1][0] == "ID":
+                        if instr[2][1][0] == "ID":
                             self.check_variable(instr[2][1][1])
                             if self.context.get_procedure().get_variable(instr[2][1][1]).formal:
                                 self.code.append(
@@ -207,7 +249,7 @@ class CodeGenerator:
                             f"STORE {self.context.memory_offset + 1}")
                         self.code.append(f"JUMP {line + 1}")
                         self.code.append(
-                            f"LOAD {self.context.memory_offset + 2}")"""
+                            f"LOAD {self.context.memory_offset + 2}")
 
                     elif instr[2][0] == "DIV":
                         self.divide((instr[2][1], instr[2][2]))
@@ -284,16 +326,11 @@ class CodeGenerator:
 
             elif instr[0] == "PROC_HEAD":
                 # ustawiam wartosc declared na rowna wartosci declared parametru procedury
-                # for index, variable in enumerate(instr[1][1]):
-                #    self.context.get_procedure(instr[1][0]).variables[index].declared = self.context.get_procedure(
-                #    ).get_variable(variable).declared
                 #####################################################
                 for index, variable in enumerate(instr[1][1]):
                     if self.context.get_procedure().get_variable(variable).formal:
                         self.code.append(
                             f"LOAD {self.context.get_procedure().get_variable(variable).memory_address}")
-                        # self.code.append(
-                        #     f"STORE {self.context.get_procedure(instr[1][0]).variables[index].memory_address}")
                     else:
                         self.code.append(
                             f"SET {self.context.get_procedure().get_variable(variable).memory_address}")
@@ -302,8 +339,6 @@ class CodeGenerator:
                     # ustaw wszystkie zmienne przekazane jako parametry jako zainicjalizowane
                     self.context.get_procedure().get_variable(variable).declared = True
                 self.code.append(f"SET {len(self.code) + 3}")
-                # self.code.append(
-                #    f"STORE {self.context.get_procedure(instr[1][0]).variables[self.context.get_procedure(instr[1][0]).#formal_arguments].memory_address}")
                 self.code.append(
                     "STORE " + str(self.context.get_procedure(instr[1][0]).get_variable("JUMPVAR").memory_address))
                 self.code.append(
@@ -321,9 +356,9 @@ class CodeGenerator:
             if self.context.loop_depth == 0:
                 raise UninitializedVariableError(
                     f">> Uninitialized variable {value} in procedure {self.context.current_procedure}")
-            var.used = True
             print(
                 f">> Warning (possibly uninitialized variable {value} in procedure {self.context.current_procedure})")
+        var.used = True
 
     def load_variable(self, var: str):
         if self.context.get_procedure().get_variable(var).formal:
@@ -349,28 +384,55 @@ class CodeGenerator:
             self.code.append(
                 f"SUB {self.context.get_procedure().get_variable(var).memory_address}")
 
-    def subtract(self, elements: list):
+    # var jest uzywana tylko w przypadku assign, by zapamietac wartosc obliczen jesli jest to mozliwe
+    def subtract(self, elements: list, var: Variable = None):
+        if var == None:  # zrobione na odwal sie, tworzy nowa zmienna z ktora nic nie robi
+            var = Variable("GARBAGE", -1)
         if elements[0][0] == "ID":
             self.check_variable(elements[0][1])
             if elements[1][0] == "ID":  # ID - ID
                 self.check_variable(elements[1][1])
-                self.load_variable(elements[0][1])
-                self.sub_variable(elements[1][1])
+                val1 = self.context.get_procedure(
+                ).get_variable(elements[0][1]).value
+                val2 = self.context.get_procedure(
+                ).get_variable(elements[1][1]).value
+                if val1 != None and val2 != None:
+                    self.code.append(f"SET {max(val1 - val2,0)}")
+                    var.value = max(val1 - val2, 0)
+                else:
+                    self.load_variable(elements[0][1])
+                    self.sub_variable(elements[1][1])
+                    var.value = None
             elif elements[1][0] == "NUM":  # ID - NUM
-                self.code.append(f"SET {elements[1][1]}")
-                self.code.append(
-                    f"STORE {self.context.memory_offset}")
-                self.load_variable(elements[0][1])
-                self.code.append(
-                    f"SUB {self.context.memory_offset}")
+                val1 = self.context.get_procedure(
+                ).get_variable(elements[0][1]).value
+                if val1 != None:
+                    self.code.append(f"SET {max(val1 - elements[1][1],0)}")
+                    var.value = max(val1 - elements[1][1], 0)
+                else:
+                    self.code.append(f"SET {elements[1][1]}")
+                    self.code.append(
+                        f"STORE {self.context.memory_offset}")
+                    self.load_variable(elements[0][1])
+                    self.code.append(
+                        f"SUB {self.context.memory_offset}")
+                    var.value = None
         elif elements[0][0] == "NUM":
             if elements[1][0] == "ID":  # NUM - ID
                 self.check_variable(elements[1][1])
-                self.code.append(f"SET {elements[0][1]}")
-                self.sub_variable(elements[1][1])
+                val2 = self.context.get_procedure(
+                ).get_variable(elements[1][1]).value
+                if val2 != None:
+                    self.code.append(f"SET {max(elements[0][1] - val2,0)}")
+                    var.value = max(elements[0][1] - val2, 0)
+                else:
+                    self.code.append(f"SET {elements[0][1]}")
+                    self.sub_variable(elements[1][1])
+                    var.value = None
             elif elements[1][0] == "NUM":  # NUM - NUM
                 self.code.append(
                     f"SET {max(elements[0][1] - elements[1][1],0)}")
+                var.value = max(elements[0][1] - elements[1][1], 0)
 
     def divide(self, elements: list):
         if elements[0][0] == "ID":

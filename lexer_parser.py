@@ -247,14 +247,56 @@ class Parser(sly.Parser):
 
     @ _('value MUL value')
     def expression(self, p):
+        if p.value0[0] == p.value1[0] == 'ID' and not self.context.mul:
+            self.context.add_procedure(Procedure("MUL"))
+            self.context.get_procedure("MUL").add_variable(
+                Variable("x", self.context.memory_offset, True, True))
+            self.context.memory_offset += 1
+            self.context.get_procedure("MUL").add_variable(
+                Variable("y", self.context.memory_offset, True, True))
+            self.context.memory_offset += 1
+            self.context.get_procedure("MUL").add_variable(
+                Variable("JUMPVAR", self.context.memory_offset))
+            self.context.memory_offset += 1
+            self.context.get_procedure(
+                "MUL").formal_arguments = 2
+            self.context.mul = True
         return "MUL", p.value0, p.value1
 
     @ _('value DIV value')
     def expression(self, p):
+        if p.value0[0] == p.value1[0] == 'ID' and not self.context.div:
+            self.context.add_procedure(Procedure("DIV"))
+            self.context.get_procedure("DIV").add_variable(
+                Variable("x", self.context.memory_offset, True, True))
+            self.context.memory_offset += 1
+            self.context.get_procedure("DIV").add_variable(
+                Variable("y", self.context.memory_offset, True, True))
+            self.context.memory_offset += 1
+            self.context.get_procedure("DIV").add_variable(
+                Variable("JUMPVAR", self.context.memory_offset))
+            self.context.memory_offset += 1
+            self.context.get_procedure(
+                "DIV").formal_arguments = 2
+            self.context.div = True
         return "DIV", p.value0, p.value1
 
     @ _('value MOD value')
     def expression(self, p):
+        if p.value0[0] == p.value1[0] == 'ID' and not self.context.mod:
+            self.context.add_procedure(Procedure("MOD"))
+            self.context.get_procedure("MOD").add_variable(
+                Variable("x", self.context.memory_offset, True, True))
+            self.context.memory_offset += 1
+            self.context.get_procedure("MOD").add_variable(
+                Variable("y", self.context.memory_offset, True, True))
+            self.context.memory_offset += 1
+            self.context.get_procedure("MOD").add_variable(
+                Variable("JUMPVAR", self.context.memory_offset))
+            self.context.memory_offset += 1
+            self.context.get_procedure(
+                "MOD").formal_arguments = 2
+            self.context.mod = True
         return "MOD", p.value0, p.value1
 
     @ _('value EQ value')

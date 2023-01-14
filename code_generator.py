@@ -102,9 +102,52 @@ class CodeGenerator:
                         self.subtract((instr[2][1], instr[2][2]))
 
                     elif instr[2][0] == "MUL":
+                        if instr[2][1][0] == "ID":
+                            self.check_variable(instr[2][1][1])
+                            if instr[2][2][0] == "ID":  # ID * ID
+                                self.check_variable(instr[2][2][1])
+                                # wywolaj proc_head
+                            elif instr[2][2][0] == "NUM":  # ID * NUM
+                                bin_rep = self.get_bin(
+                                    instr[2][2][1])[::-1]
+                                if bin_rep == 0:
+                                    self.code.append("SET 0")
+                                else:  # memory_offset = wynik; memory_offset + 1 = wartosc kolejnej potegi
+                                    zeroes_counter = 1  # liczba zer miedzy kolejnymi jedynkami + 1
+                                    if bin_rep[0] == '1':
+                                        self.code.append(
+                                            f"SET {instr[2][2][1]}")
+                                        self.code.append(
+                                            f"STORE {self.context.memory_offset}")
+                                        self.code.append(
+                                            f"STORE {self.context.memory_offset+1}")
+                                    else:
+                                        zeroes_counter += 1
+                                        self.code.append("SET 0")
+                                        self.code.append(
+                                            f"STORE {self.context.memory_offset}")
+                                        self.code.append(
+                                            f"SET {instr[2][2][1]}")
+                                        self.code.append(
+                                            f"STORE {self.context.memory_offset+1}")
+                                    for digit in bin_rep[1:]:
+                                        if digit == '0':
+                                            zeroes_counter += 1
+                                        else:
+                                            self.code.append(
+                                                f"LOAD {self.context.memory_offset+1}")
+
+                        elif instr[2][1][0] == "NUM":
+                            if instr[2][2][0] == "ID":  # NUM * ID
+                                self.check_variable(instr[2][2][1])
+                                self.code.append(f"SET {instr[2][1][1]}")
+                                self.add_variable(instr[2][2][1])
+                            elif instr[2][2][0] == "NUM":  # NUM * NUM
+                                self.code.append(
+                                    f"SET {instr[2][1][1] * instr[2][2][1]}")
                         # do poprawy
                         # x * y -> x w pierwszej wolnej komórce, y w drugiej wolnej, wynik w trzeciej wolnej
-                        if instr[2][1][0] == "ID":
+                        """if instr[2][1][0] == "ID":
                             self.check_variable(instr[2][1][1])
                             if self.context.get_procedure().get_variable(instr[2][1][1]).formal:
                                 self.code.append(
@@ -164,7 +207,7 @@ class CodeGenerator:
                             f"STORE {self.context.memory_offset + 1}")
                         self.code.append(f"JUMP {line + 1}")
                         self.code.append(
-                            f"LOAD {self.context.memory_offset + 2}")
+                            f"LOAD {self.context.memory_offset + 2}")"""
 
                     elif instr[2][0] == "DIV":
                         self.divide((instr[2][1], instr[2][2]))
@@ -430,6 +473,9 @@ class CodeGenerator:
     def delete_unused_procedures(self):
         # nazwy wszystkich procedur
         proc_names = [proc.name for proc in self.context.procedures[:-1]]
+        # bez procedur MUL, DIV, MOD
+        proc_names = list(
+            filter(lambda x: x not in ["MUL", "DIV", "MOD"], proc_names))
 
         proc_queue = []  # tu beda dodawane procedury wykonane, by sprawdzic jakie w nich beda wykonane procedury
         # wielokrotnie splaszczone ast w main
@@ -465,3 +511,6 @@ class CodeGenerator:
             else:
                 self.flatten_ast(elem, flattened)
         return flattened
+
+    def get_bin(self, value: int):
+        return bin(value)[2:]

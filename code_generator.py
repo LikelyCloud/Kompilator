@@ -112,6 +112,24 @@ class CodeGenerator:
                                 self.load_variable(instr[2][2][1])
                                 self.code.append(
                                     f"STORE {self.context.memory_offset+1}")
+
+                                # x * y => if x < y then swap(x,y)
+                                self.code.append(
+                                    f"SUB {self.context.memory_offset}")
+                                self.code.append(f"JZERO {len(self.code) + 7}")
+                                self.code.append(
+                                    f"LOAD {self.context.memory_offset}")
+                                self.code.append(
+                                    f"STORE {self.context.memory_offset+2}")
+                                self.code.append(
+                                    f"LOAD {self.context.memory_offset+1}")
+                                self.code.append(
+                                    f"STORE {self.context.memory_offset}")
+                                self.code.append(
+                                    f"LOAD {self.context.memory_offset+2}")
+                                self.code.append(
+                                    f"STORE {self.context.memory_offset+1}")
+
                                 self.code.append("SET 0")
                                 self.code.append(
                                     f"STORE {self.context.memory_offset + 2}")

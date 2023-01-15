@@ -203,7 +203,7 @@ class Parser(sly.Parser):
             raise ArgumentsProcedureError(
                 f">>> Incorrect number of arguments in procedure {p.proc_head[0]} in line {p.lineno}")
         # zakladam ze wszyskie zmienne przekazane do fuknkcji (nawet te niezainicjalizowane) po wyjsciu beda zainicjalizowane
-
+        # zmieniono
         #self.context.get_procedure(p.proc_head[0]).used = True
         return "PROC_HEAD", p.proc_head
 

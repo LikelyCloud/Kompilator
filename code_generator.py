@@ -102,9 +102,153 @@ class CodeGenerator:
                         self.subtract((instr[2][1], instr[2][2]))
 
                     elif instr[2][0] == "MUL":
+                        if instr[2][1][0] == "ID":
+                            self.check_variable(instr[2][1][1])
+                            if instr[2][2][0] == "ID":  # ID * ID
+                                self.check_variable(instr[2][2][1])
+                                self.load_variable(instr[2][1][1])
+                                self.code.append(
+                                    f"STORE {self.context.memory_offset}")
+                                self.load_variable(instr[2][2][1])
+                                self.code.append(
+                                    f"STORE {self.context.memory_offset+1}")
+                                self.code.append("SET 0")
+                                self.code.append(
+                                    f"STORE {self.context.memory_offset + 2}")
+
+                                line = len(self.code) - 1
+                                self.code.append(
+                                    f"LOAD {self.context.memory_offset + 1}")
+                                self.code.append(f"JZERO {line + 19}")
+                                self.code.append("HALF")
+                                self.code.append("ADD 0")
+                                self.code.append(
+                                    f"STORE {self.context.memory_offset + 3}")
+                                self.code.append(
+                                    f"LOAD {self.context.memory_offset + 1}")
+                                self.code.append(
+                                    f"SUB {self.context.memory_offset + 3}")
+                                self.code.append(f"JZERO {line + 12}")
+                                self.code.append(
+                                    f"LOAD {self.context.memory_offset + 2}")
+                                self.code.append(
+                                    f"ADD {self.context.memory_offset}")
+                                self.code.append(
+                                    f"STORE {self.context.memory_offset + 2}")
+                                self.code.append(
+                                    f"LOAD {self.context.memory_offset}")
+                                self.code.append("ADD 0")
+                                self.code.append(
+                                    f"STORE {self.context.memory_offset}")
+                                self.code.append(
+                                    f"LOAD {self.context.memory_offset + 1}")
+                                self.code.append("HALF")
+                                self.code.append(
+                                    f"STORE {self.context.memory_offset + 1}")
+                                self.code.append(f"JUMP {line + 1}")
+                                self.code.append(
+                                    f"LOAD {self.context.memory_offset + 2}")
+
+                            elif instr[2][2][0] == "NUM":  # ID * NUM
+                                # self.code.append(f"SET {instr[2][2][1]}")
+                                # self.add_variable(instr[2][1][1])
+                                if instr[2][2][1] == 0:
+                                    self.code.append("SET 0")
+                                # memory_offset -> obecna wielokrotnosc ID; memory_offset + 1 -> obecny wynik
+                                # jesli ID to potega 2
+                                elif instr[2][2][1] & (instr[2][2][1] - 1) == 0:
+                                    bin_rep = self.get_bin(
+                                        instr[2][2][1])[::-1]
+                                    self.load_variable(instr[2][1][1])
+                                    for _ in bin_rep[1:]:
+                                        self.code.append("ADD 0")
+                                else:
+                                    bin_rep = self.get_bin(
+                                        instr[2][2][1])[::-1]
+                                    if bin_rep[0] == '0':
+                                        self.code.append("SET 0")
+                                        self.code.append(
+                                            f"STORE {self.context.memory_offset + 1}")
+                                        self.load_variable(instr[2][1][1])
+                                        self.code.append(
+                                            f"STORE {self.context.memory_offset}")
+                                    else:
+                                        self.load_variable(instr[2][1][1])
+                                        self.code.append(
+                                            f"STORE {self.context.memory_offset + 1}")
+                                        self.code.append(
+                                            f"STORE {self.context.memory_offset}")
+                                    counter = 1  # ile razy pomnozyc przed dodaniem
+                                    for digit in bin_rep[1:]:
+                                        if digit == '0':
+                                            counter += 1
+                                        else:
+                                            self.code.append(
+                                                f"LOAD {self.context.memory_offset}")
+                                            for _ in range(0, counter):
+                                                self.code.append("ADD 0")
+                                            self.code.append(
+                                                f"STORE {self.context.memory_offset}")
+                                            self.code.append(
+                                                f"ADD {self.context.memory_offset+1}")
+                                            self.code.append(
+                                                f"STORE {self.context.memory_offset+1}")
+                                            counter = 1
+                        elif instr[2][1][0] == "NUM":
+                            if instr[2][2][0] == "ID":  # NUM * ID
+                                # self.check_variable(instr[2][2][1])
+                                # self.code.append(f"SET {instr[2][1][1]}")
+                                # self.add_variable(instr[2][2][1])
+                                self.check_variable(instr[2][2][1])
+                                if instr[2][1][1] == 0:
+                                    self.code.append("SET 0")
+                                # memory_offset -> obecna wielokrotnosc ID; memory_offset + 1 -> obecny wynik
+                                # jesli ID to potega 2
+                                elif instr[2][1][1] & (instr[2][1][1] - 1) == 0:
+                                    bin_rep = self.get_bin(
+                                        instr[2][1][1])[::-1]
+                                    self.load_variable(instr[2][2][1])
+                                    for _ in bin_rep[1:]:
+                                        self.code.append("ADD 0")
+                                else:
+                                    bin_rep = self.get_bin(
+                                        instr[2][1][1])[::-1]
+                                    if bin_rep[0] == '0':
+                                        self.code.append("SET 0")
+                                        self.code.append(
+                                            f"STORE {self.context.memory_offset + 1}")
+                                        self.load_variable(instr[2][2][1])
+                                        self.code.append(
+                                            f"STORE {self.context.memory_offset}")
+                                    else:
+                                        self.load_variable(instr[2][2][1])
+                                        self.code.append(
+                                            f"STORE {self.context.memory_offset + 1}")
+                                        self.code.append(
+                                            f"STORE {self.context.memory_offset}")
+                                    counter = 1  # ile razy pomnozyc przed dodaniem
+                                    for digit in bin_rep[1:]:
+                                        if digit == '0':
+                                            counter += 1
+                                        else:
+                                            self.code.append(
+                                                f"LOAD {self.context.memory_offset}")
+                                            for _ in range(0, counter):
+                                                self.code.append("ADD 0")
+                                            self.code.append(
+                                                f"STORE {self.context.memory_offset}")
+                                            self.code.append(
+                                                f"ADD {self.context.memory_offset+1}")
+                                            self.code.append(
+                                                f"STORE {self.context.memory_offset+1}")
+                                            counter = 1
+
+                            elif instr[2][2][0] == "NUM":  # NUM * NUM
+                                self.code.append(
+                                    f"SET {instr[2][1][1] * instr[2][2][1]}")
                         # do poprawy
                         # x * y -> x w pierwszej wolnej komórce, y w drugiej wolnej, wynik w trzeciej wolnej
-                        if instr[2][1][0] == "ID":
+                        """if instr[2][1][0] == "ID":
                             self.check_variable(instr[2][1][1])
                             if self.context.get_procedure().get_variable(instr[2][1][1]).formal:
                                 self.code.append(
@@ -164,16 +308,82 @@ class CodeGenerator:
                             f"STORE {self.context.memory_offset + 1}")
                         self.code.append(f"JUMP {line + 1}")
                         self.code.append(
-                            f"LOAD {self.context.memory_offset + 2}")
+                            f"LOAD {self.context.memory_offset + 2}")"""
 
                     elif instr[2][0] == "DIV":
-                        self.divide((instr[2][1], instr[2][2]))
-                        self.code.append(
-                            f"LOAD {self.context.memory_offset + 3}")
+                        if instr[2][1][0] == "ID":
+                            self.check_variable(instr[2][1][1])
+                            if instr[2][2][0] == "ID":  # ID / ID
+                                self.check_variable(instr[2][2][1])
+                                self.divide((instr[2][1], instr[2][2]))
+                                self.code.append(
+                                    f"LOAD {self.context.memory_offset + 3}")
+                            elif instr[2][2][0] == "NUM":  # ID / NUM
+                                if instr[2][2][1] == 0:
+                                    self.code.append("SET 0")
+                                elif instr[2][2][1] & (instr[2][2][1] - 1) == 0:
+                                    bin_rep = self.get_bin(
+                                        instr[2][2][1])[::-1]
+                                    self.load_variable(instr[2][1][1])
+                                    for _ in bin_rep[1:]:
+                                        self.code.append("HALF")
+                                else:
+                                    self.divide((instr[2][1], instr[2][2]))
+                                    self.code.append(
+                                        f"LOAD {self.context.memory_offset + 3}")
+                        elif instr[2][1][0] == "NUM":
+                            if instr[2][2][0] == "ID":  # NUM / ID
+                                self.check_variable(instr[2][2][1])
+                                if instr[2][1][1] == 0:
+                                    self.code.append("SET 0")
+                                else:
+                                    self.divide((instr[2][1], instr[2][2]))
+                                    self.code.append(
+                                        f"LOAD {self.context.memory_offset + 3}")
+                            elif instr[2][2][0] == "NUM":  # NUM / NUM
+                                if instr[2][1][1] == 0 or instr[2][2][1] == 0:
+                                    self.code.append("SET 0")
+                                else:
+                                    self.code.append(
+                                        f"SET {instr[2][1][1] // instr[2][2][1]}")
+
+                        #self.divide((instr[2][1], instr[2][2]))
+                        # self.code.append(
+                        #    f"LOAD {self.context.memory_offset + 3}")
+
                     elif instr[2][0] == "MOD":
-                        self.divide((instr[2][1], instr[2][2]))
-                        self.code.append(
-                            f"LOAD {self.context.memory_offset}")
+                        if instr[2][1][0] == "ID":
+                            self.check_variable(instr[2][1][1])
+                            if instr[2][2][0] == "ID":  # ID % ID
+                                self.check_variable(instr[2][2][1])
+                                self.divide((instr[2][1], instr[2][2]))
+                                self.code.append(
+                                    f"LOAD {self.context.memory_offset}")
+                            elif instr[2][2][0] == "NUM":  # ID % NUM
+                                if instr[2][2][1] == 0:
+                                    self.code.append("SET 0")
+                                else:
+                                    self.divide((instr[2][1], instr[2][2]))
+                                    self.code.append(
+                                        f"LOAD {self.context.memory_offset}")
+                        elif instr[2][1][0] == "NUM":
+                            if instr[2][2][0] == "ID":  # NUM % ID
+                                self.check_variable(instr[2][2][1])
+                                if instr[2][1][1] == 0:
+                                    self.code.append("SET 0")
+                                else:
+                                    self.divide((instr[2][1], instr[2][2]))
+                                    self.code.append(
+                                        f"LOAD {self.context.memory_offset}")
+                            elif instr[2][2][0] == "NUM":  # NUM % NUM
+                                if instr[2][1][1] == 0 or instr[2][2][1] == 0:
+                                    self.code.append("SET 0")
+                                else:
+                                    self.code.append(
+                                        f"SET {instr[2][1][1] % instr[2][2][1]}")
+                        #self.divide((instr[2][1], instr[2][2]))
+                        # self.code.append(
+                        #    f"LOAD {self.context.memory_offset}")
 
                     var.declared = True
                     if var.formal:
@@ -278,9 +488,9 @@ class CodeGenerator:
             if self.context.loop_depth == 0:
                 raise UninitializedVariableError(
                     f">> Uninitialized variable {value} in procedure {self.context.current_procedure}")
-            var.used = True
             print(
                 f">> Warning (possibly uninitialized variable {value} in procedure {self.context.current_procedure})")
+        var.used = True
 
     def load_variable(self, var: str):
         if self.context.get_procedure().get_variable(var).formal:
@@ -465,3 +675,6 @@ class CodeGenerator:
             else:
                 self.flatten_ast(elem, flattened)
         return flattened
+
+    def get_bin(self, value: int):
+        return bin(value)[2:]

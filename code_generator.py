@@ -1,6 +1,5 @@
 from context import Context
 from exceptions import UndeclaredVariableError, UninitializedVariableError
-import itertools
 
 
 class CodeGenerator:
@@ -11,8 +10,8 @@ class CodeGenerator:
         self.delete_unused_procedures()
         self.generate_code(self.instructions)
         self.code.append("HALT")
-        print(self.instructions)
-        print(self.context)
+        # print(self.instructions)
+        # print(self.context)
 
     def generate_code(self, instructions: list):
         for instr in instructions:
@@ -39,7 +38,7 @@ class CodeGenerator:
                 var = self.context.get_procedure().get_variable(instr[1])
                 if var == None:
                     raise UndeclaredVariableError(
-                        f">>> Undeclared variable {instr[1]} in procedure {self.context.current_procedure}")
+                        f'>>> Undeclared variable {instr[1]} in procedure {self.context.current_procedure if self.context.current_procedure != "MAIN" else "PROGRAM"}')
                 else:
                     if var.formal:
                         self.code.append("GET 0")
@@ -68,7 +67,7 @@ class CodeGenerator:
                 var = self.context.get_procedure().get_variable(instr[1])
                 if var == None:
                     raise UndeclaredVariableError(
-                        f">>> Undeclared variable {instr[1]} in procedure {self.context.current_procedure}")
+                        f'>>> Undeclared variable {instr[1]} in procedure {self.context.current_procedure if self.context.current_procedure != "MAIN" else "PROGRAM"}')
                 else:
                     if instr[2][0] == "VALUE":
                         if instr[2][1][0] == "ID":
@@ -501,13 +500,13 @@ class CodeGenerator:
         ).get_variable(value)
         if var == None:
             raise UndeclaredVariableError(
-                f">> Undeclared variable {value} in procedure {self.context.current_procedure}")
+                f'>> Undeclared variable {value} in procedure {self.context.current_procedure if self.context.current_procedure != "MAIN" else "PROGRAM"}')
         elif not var.declared:
             if self.context.loop_depth == 0:
                 raise UninitializedVariableError(
-                    f">> Uninitialized variable {value} in procedure {self.context.current_procedure}")
+                    f'>> Uninitialized variable {value} in procedure {self.context.current_procedure if self.context.current_procedure != "MAIN" else "PROGRAM"}')
             print(
-                f">> Warning (possibly uninitialized variable {value} in procedure {self.context.current_procedure})")
+                f'>> Warning (possibly uninitialized variable {value} in procedure {self.context.current_procedure if self.context.current_procedure != "MAIN" else "PROGRAM"})')
         var.used = True
 
     def load_variable(self, var: str):
@@ -558,6 +557,7 @@ class CodeGenerator:
                     f"SET {max(elements[0][1] - elements[1][1],0)}")
 
     def divide(self, elements: list):
+        size = None
         if elements[0][0] == "ID":
             self.check_variable(elements[0][1])
             if self.context.get_procedure().get_variable(elements[0][1]).formal:
@@ -580,6 +580,15 @@ class CodeGenerator:
             else:
                 self.code.append(
                     f"LOAD {self.context.get_procedure().get_variable(elements[1][1]).memory_address}")
+
+            self.code.append(f"JPOS {len(self.code) + 4}")
+            self.code.append(
+                f"STORE {self.context.memory_offset}")
+            self.code.append(
+                f"STORE {self.context.memory_offset + 3}")
+            self.code.append("JUMP ")
+            size = len(self.code) - 1
+
             self.code.append(
                 f"STORE {self.context.memory_offset + 1}")
             self.code.append(
@@ -593,6 +602,7 @@ class CodeGenerator:
         self.code.append("SET 0")
         self.code.append(
             f"STORE {self.context.memory_offset + 3}")
+
 
         self.code.append(f"LOAD {self.context.memory_offset + 1}")
         self.code.append(f"SUB {self.context.memory_offset}")
@@ -623,6 +633,9 @@ class CodeGenerator:
         self.code.append("HALF")
         self.code.append(f"STORE {self.context.memory_offset + 1}")
         self.code.append(f"JUMP {len(self.code) - 18}")
+
+        if size is not None:
+            self.code[size] += str(len(self.code))
 
     # popraw mnozenie
     # w EQ zwracam miejsce z ktorego trzeba skoczyc za koniec kodu warunkowego i w obliczaniu IF, IF-ELSE, ... sprawdzam czy evaluate_condition() zwraca None, jesli nie to sprawdzany warunek to EQ i trzeba dodac adres do JUMP

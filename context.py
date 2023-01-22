@@ -55,7 +55,8 @@ class Context:
         self.current_procedure = ""
         self.memory_offset = 1
         self.loop_depth = 0
-        # self.acc = None  # accumulator value
+        self.mul = False
+        self.div = False
 
     def add_procedure(self, proc: Procedure):
         self.procedures.append(proc)

@@ -10,12 +10,125 @@ class CodeGenerator:
         self.delete_unused_procedures()
         self.generate_code(self.instructions)
         self.code.append("HALT")
-        # print(self.instructions)
-        # print(self.context)
+        print(self.instructions)
+        print(self.context)
+        print(self.context.mul)
+        print(self.context.div)
 
     def generate_code(self, instructions: list):
         for instr in instructions:
             if instr[0] == "PROCEDURES":
+                if self.context.mul:
+                    self.code.append("JUMP ")
+                    self.context.current_procedure = "MUL"
+                    self.context.get_procedure().procedure_address = len(self.code)
+                    ###########
+                    a_addr = self.context.get_procedure().get_variable("a").memory_address
+                    b_addr = self.context.get_procedure().get_variable("b").memory_address
+                    c_addr = self.context.get_procedure().get_variable("c").memory_address
+                    d_addr = self.context.get_procedure().get_variable("d").memory_address
+                    self.code.append(f"LOAD {b_addr}")
+                    self.code.append(
+                        f"SUB {a_addr}")
+                    self.code.append(f"JZERO {len(self.code) + 7}")
+                    self.code.append(
+                        f"LOAD {a_addr}")
+                    self.code.append(
+                        f"STORE {c_addr}")
+                    self.code.append(
+                        f"LOAD {b_addr}")
+                    self.code.append(
+                        f"STORE {a_addr}")
+                    self.code.append(
+                        f"LOAD {c_addr}")
+                    self.code.append(
+                        f"STORE {b_addr}")
+
+                    self.code.append("SET 0")
+                    self.code.append(
+                        f"STORE {c_addr}")
+
+                    line = len(self.code) - 1
+                    self.code.append(
+                        f"LOAD {b_addr}")
+                    self.code.append(f"JZERO {line + 19}")
+                    self.code.append("HALF")
+                    self.code.append("ADD 0")
+                    self.code.append(
+                        f"STORE {d_addr}")
+                    self.code.append(
+                        f"LOAD {b_addr}")
+                    self.code.append(
+                        f"SUB {d_addr}")
+                    self.code.append(f"JZERO {line + 12}")
+                    self.code.append(
+                        f"LOAD {c_addr}")
+                    self.code.append(
+                        f"ADD {a_addr}")
+                    self.code.append(
+                        f"STORE {c_addr}")
+                    self.code.append(
+                        f"LOAD {a_addr}")
+                    self.code.append("ADD 0")
+                    self.code.append(
+                        f"STORE {a_addr}")
+                    self.code.append(
+                        f"LOAD {b_addr}")
+                    self.code.append("HALF")
+                    self.code.append(
+                        f"STORE {b_addr}")
+                    self.code.append(f"JUMP {line + 1}")
+                    self.code.append(
+                        f"LOAD {c_addr}")
+                    self.code.append(
+                        "JUMPI " + str(self.context.get_procedure().get_variable("JUMPVAR").memory_address))
+                    ###########
+
+                if self.context.div:
+                    if not self.context.mul:
+                        self.code.append("JUMP ")
+                    self.context.current_procedure = "DIV"
+                    self.context.get_procedure().procedure_address = len(self.code)
+                    a_addr = self.context.get_procedure().get_variable("a").memory_address
+                    b_addr = self.context.get_procedure().get_variable("b").memory_address
+                    d_addr = self.context.get_procedure().get_variable("d").memory_address
+                    r_addr = self.context.get_procedure().get_variable("r").memory_address
+                    self.code.append(f"LOAD {b_addr}")
+                    self.code.append(f"STORE {d_addr}")
+                    self.code.append("SET 0")
+                    self.code.append(f"STORE {r_addr}")
+                    self.code.append(f"LOAD {b_addr}")
+                    self.code.append(f"SUB {a_addr}")
+                    self.code.append(f"JPOS {len(self.code) + 5}")
+                    self.code.append(f"LOAD {b_addr}")
+                    self.code.append("ADD 0")
+                    self.code.append(f"STORE {b_addr}")
+                    self.code.append(f"JUMP {len(self.code) - 6}")
+                    self.code.append(f"LOAD {b_addr}")
+                    self.code.append("HALF")
+                    self.code.append(f"STORE {b_addr}")
+                    self.code.append(f"LOAD {d_addr}")
+                    self.code.append(f"SUB {b_addr}")
+                    self.code.append(f"JPOS {len(self.code) + 17}")
+                    self.code.append(f"LOAD {r_addr}")
+                    self.code.append("ADD 0")
+                    self.code.append(f"STORE {r_addr}")
+                    self.code.append(f"LOAD {b_addr}")
+                    self.code.append(f"SUB {a_addr}")
+                    self.code.append(f"JPOS {len(self.code) + 7}")
+                    self.code.append("SET 1")
+                    self.code.append(f"ADD {r_addr}")
+                    self.code.append(f"STORE {r_addr}")
+                    self.code.append(f"LOAD {a_addr}")
+                    self.code.append(f"SUB {b_addr}")
+                    self.code.append(f"STORE {a_addr}")
+                    self.code.append(f"LOAD {b_addr}")
+                    self.code.append("HALF")
+                    self.code.append(f"STORE {b_addr}")
+                    self.code.append(f"JUMP {len(self.code) - 18}")
+                    self.code.append(
+                        "JUMPI " + str(self.context.get_procedure().get_variable("JUMPVAR").memory_address))
+
                 for procedure in instr[1]:
                     # do zmiany: po prostu sprawdz czy sa jakies procedury (nieuzyte beda juz usuniete z ast)
                     if self.context.get_procedure(procedure[0]).used:
@@ -42,8 +155,6 @@ class CodeGenerator:
                 else:
                     if var.formal:
                         self.code.append("GET 0")
-                        # self.context.acc = None  # undefined value
-                        # print(f"WAR {var}")
                         self.code.append(f"STOREI {var.memory_address}")
                     else:
                         self.code.append(f"GET {var.memory_address}")
@@ -73,10 +184,8 @@ class CodeGenerator:
                         if instr[2][1][0] == "ID":
                             self.check_variable(instr[2][1][1])
                             self.load_variable(instr[2][1][1])
-                            # if self.context
                         elif instr[2][1][0] == "NUM":
                             self.code.append(f"SET {instr[2][1][1]}")
-                            # var.value = instr[2][1][1]
 
                     elif instr[2][0] == "ADD":
                         if instr[2][1][0] == "ID":
@@ -107,68 +216,17 @@ class CodeGenerator:
                                 self.check_variable(instr[2][2][1])
                                 self.load_variable(instr[2][1][1])
                                 self.code.append(
-                                    f"STORE {self.context.memory_offset}")
+                                    f'STORE {self.context.get_procedure("MUL").get_variable("a").memory_address}')
                                 self.load_variable(instr[2][2][1])
                                 self.code.append(
-                                    f"STORE {self.context.memory_offset+1}")
-
-                                # x * y => if x < y then swap(x,y)
+                                    f'STORE {self.context.get_procedure("MUL").get_variable("b").memory_address}')
+                                self.code.append(f"SET {len(self.code) + 3}")
                                 self.code.append(
-                                    f"SUB {self.context.memory_offset}")
-                                self.code.append(f"JZERO {len(self.code) + 7}")
+                                    "STORE " + str(self.context.get_procedure("MUL").get_variable("JUMPVAR").memory_address))
                                 self.code.append(
-                                    f"LOAD {self.context.memory_offset}")
-                                self.code.append(
-                                    f"STORE {self.context.memory_offset+2}")
-                                self.code.append(
-                                    f"LOAD {self.context.memory_offset+1}")
-                                self.code.append(
-                                    f"STORE {self.context.memory_offset}")
-                                self.code.append(
-                                    f"LOAD {self.context.memory_offset+2}")
-                                self.code.append(
-                                    f"STORE {self.context.memory_offset+1}")
-
-                                self.code.append("SET 0")
-                                self.code.append(
-                                    f"STORE {self.context.memory_offset + 2}")
-
-                                line = len(self.code) - 1
-                                self.code.append(
-                                    f"LOAD {self.context.memory_offset + 1}")
-                                self.code.append(f"JZERO {line + 19}")
-                                self.code.append("HALF")
-                                self.code.append("ADD 0")
-                                self.code.append(
-                                    f"STORE {self.context.memory_offset + 3}")
-                                self.code.append(
-                                    f"LOAD {self.context.memory_offset + 1}")
-                                self.code.append(
-                                    f"SUB {self.context.memory_offset + 3}")
-                                self.code.append(f"JZERO {line + 12}")
-                                self.code.append(
-                                    f"LOAD {self.context.memory_offset + 2}")
-                                self.code.append(
-                                    f"ADD {self.context.memory_offset}")
-                                self.code.append(
-                                    f"STORE {self.context.memory_offset + 2}")
-                                self.code.append(
-                                    f"LOAD {self.context.memory_offset}")
-                                self.code.append("ADD 0")
-                                self.code.append(
-                                    f"STORE {self.context.memory_offset}")
-                                self.code.append(
-                                    f"LOAD {self.context.memory_offset + 1}")
-                                self.code.append("HALF")
-                                self.code.append(
-                                    f"STORE {self.context.memory_offset + 1}")
-                                self.code.append(f"JUMP {line + 1}")
-                                self.code.append(
-                                    f"LOAD {self.context.memory_offset + 2}")
+                                    f'JUMP {self.context.get_procedure("MUL").procedure_address}')
 
                             elif instr[2][2][0] == "NUM":  # ID * NUM
-                                # self.code.append(f"SET {instr[2][2][1]}")
-                                # self.add_variable(instr[2][1][1])
                                 if instr[2][2][1] == 0:
                                     self.code.append("SET 0")
                                 # memory_offset -> obecna wielokrotnosc ID; memory_offset + 1 -> obecny wynik
@@ -213,9 +271,6 @@ class CodeGenerator:
                                             counter = 1
                         elif instr[2][1][0] == "NUM":
                             if instr[2][2][0] == "ID":  # NUM * ID
-                                # self.check_variable(instr[2][2][1])
-                                # self.code.append(f"SET {instr[2][1][1]}")
-                                # self.add_variable(instr[2][2][1])
                                 self.check_variable(instr[2][2][1])
                                 if instr[2][1][1] == 0:
                                     self.code.append("SET 0")
@@ -263,78 +318,29 @@ class CodeGenerator:
                             elif instr[2][2][0] == "NUM":  # NUM * NUM
                                 self.code.append(
                                     f"SET {instr[2][1][1] * instr[2][2][1]}")
-                        # do poprawy
-                        # x * y -> x w pierwszej wolnej komórce, y w drugiej wolnej, wynik w trzeciej wolnej
-                        """if instr[2][1][0] == "ID":
-                            self.check_variable(instr[2][1][1])
-                            if self.context.get_procedure().get_variable(instr[2][1][1]).formal:
-                                self.code.append(
-                                    f"LOADI {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
-                            else:
-                                self.code.append(
-                                    f"LOAD {self.context.get_procedure().get_variable(instr[2][1][1]).memory_address}")
-                            self.code.append(
-                                f"STORE {self.context.memory_offset}")
-                        elif instr[2][1][0] == "NUM":
-                            self.code.append(f"SET {instr[2][1][1]}")
-                            self.code.append(
-                                f"STORE {self.context.memory_offset}")
-                        if instr[2][2][0] == "ID":
-                            self.check_variable(instr[2][2][1])
-                            if self.context.get_procedure().get_variable(instr[2][2][1]).formal:
-                                self.code.append(
-                                    f"LOADI {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
-                            else:
-                                self.code.append(
-                                    f"LOAD {self.context.get_procedure().get_variable(instr[2][2][1]).memory_address}")
-                            self.code.append(
-                                f"STORE {self.context.memory_offset + 1}")
-                        elif instr[2][2][0] == "NUM":
-                            self.code.append(f"SET {instr[2][2][1]}")
-                            self.code.append(
-                                f"STORE {self.context.memory_offset + 1}")
-                        self.code.append("SET 0")
-                        self.code.append(
-                            f"STORE {self.context.memory_offset + 2}")
-
-                        line = len(self.code) - 1
-                        self.code.append(
-                            f"LOAD {self.context.memory_offset + 1}")
-                        self.code.append(f"JZERO {line + 19}")
-                        self.code.append("HALF")
-                        self.code.append("ADD 0")
-                        self.code.append(
-                            f"STORE {self.context.memory_offset + 3}")
-                        self.code.append(
-                            f"LOAD {self.context.memory_offset + 1}")
-                        self.code.append(
-                            f"SUB {self.context.memory_offset + 3}")
-                        self.code.append(f"JZERO {line + 12}")
-                        self.code.append(
-                            f"LOAD {self.context.memory_offset + 2}")
-                        self.code.append(f"ADD {self.context.memory_offset}")
-                        self.code.append(
-                            f"STORE {self.context.memory_offset + 2}")
-                        self.code.append(f"LOAD {self.context.memory_offset}")
-                        self.code.append("ADD 0")
-                        self.code.append(f"STORE {self.context.memory_offset}")
-                        self.code.append(
-                            f"LOAD {self.context.memory_offset + 1}")
-                        self.code.append("HALF")
-                        self.code.append(
-                            f"STORE {self.context.memory_offset + 1}")
-                        self.code.append(f"JUMP {line + 1}")
-                        self.code.append(
-                            f"LOAD {self.context.memory_offset + 2}")"""
 
                     elif instr[2][0] == "DIV":
                         if instr[2][1][0] == "ID":
                             self.check_variable(instr[2][1][1])
                             if instr[2][2][0] == "ID":  # ID / ID
                                 self.check_variable(instr[2][2][1])
-                                self.divide((instr[2][1], instr[2][2]))
+                                # self.divide((instr[2][1], instr[2][2]))
+                                self.load_variable(instr[2][2][1])
+                                self.code.append(f"JPOS {len(self.code) + 3}")
+                                self.code.append("SET 0")
+                                self.code.append(f"JUMP {len(self.code) + 8}")
                                 self.code.append(
-                                    f"LOAD {self.context.memory_offset + 3}")
+                                    f'STORE {self.context.get_procedure("DIV").get_variable("b").memory_address}')
+                                self.load_variable(instr[2][1][1])
+                                self.code.append(
+                                    f'STORE {self.context.get_procedure("DIV").get_variable("a").memory_address}')
+                                self.code.append(f"SET {len(self.code) + 3}")
+                                self.code.append(
+                                    "STORE " + str(self.context.get_procedure("DIV").get_variable("JUMPVAR").memory_address))
+                                self.code.append(
+                                    f'JUMP {self.context.get_procedure("DIV").procedure_address}')
+                                self.code.append(
+                                    f'LOAD {self.context.get_procedure("DIV").get_variable("r").memory_address}')
                             elif instr[2][2][0] == "NUM":  # ID / NUM
                                 if instr[2][2][1] == 0:
                                     self.code.append("SET 0")
@@ -345,18 +351,49 @@ class CodeGenerator:
                                     for _ in bin_rep[1:]:
                                         self.code.append("HALF")
                                 else:
-                                    self.divide((instr[2][1], instr[2][2]))
+                                    # self.divide((instr[2][1], instr[2][2]))
+                                    # self.load_variable(instr[2][2][1])
+                                    self.code.append(f"SET {instr[2][2][1]}")
                                     self.code.append(
-                                        f"LOAD {self.context.memory_offset + 3}")
+                                        f'STORE {self.context.get_procedure("DIV").get_variable("b").memory_address}')
+                                    self.load_variable(instr[2][1][1])
+                                    self.code.append(
+                                        f'STORE {self.context.get_procedure("DIV").get_variable("a").memory_address}')
+                                    self.code.append(
+                                        f"SET {len(self.code) + 3}")
+                                    self.code.append(
+                                        "STORE " + str(self.context.get_procedure("DIV").get_variable("JUMPVAR").memory_address))
+                                    self.code.append(
+                                        f'JUMP {self.context.get_procedure("DIV").procedure_address}')
+                                    self.code.append(
+                                        f'LOAD {self.context.get_procedure("DIV").get_variable("r").memory_address}')
                         elif instr[2][1][0] == "NUM":
                             if instr[2][2][0] == "ID":  # NUM / ID
                                 self.check_variable(instr[2][2][1])
                                 if instr[2][1][1] == 0:
                                     self.code.append("SET 0")
                                 else:
-                                    self.divide((instr[2][1], instr[2][2]))
+                                    # self.divide((instr[2][1], instr[2][2]))
+                                    self.load_variable(instr[2][2][1])
                                     self.code.append(
-                                        f"LOAD {self.context.memory_offset + 3}")
+                                        f"JPOS {len(self.code) + 3}")
+                                    self.code.append("SET 0")
+                                    self.code.append(
+                                        f"JUMP {len(self.code) + 8}")
+                                    self.code.append(
+                                        f'STORE {self.context.get_procedure("DIV").get_variable("b").memory_address}')
+                                    self.code.append(f"SET {instr[2][1][1]}")
+                                    self.code.append(
+                                        f'STORE {self.context.get_procedure("DIV").get_variable("a").memory_address}')
+                                    self.code.append(
+                                        f"SET {len(self.code) + 3}")
+                                    self.code.append(
+                                        "STORE " + str(self.context.get_procedure("DIV").get_variable("JUMPVAR").memory_address))
+                                    self.code.append(
+                                        f'JUMP {self.context.get_procedure("DIV").procedure_address}')
+                                    self.code.append(
+                                        f'LOAD {self.context.get_procedure("DIV").get_variable("r").memory_address}')
+
                             elif instr[2][2][0] == "NUM":  # NUM / NUM
                                 if instr[2][1][1] == 0 or instr[2][2][1] == 0:
                                     self.code.append("SET 0")
@@ -364,7 +401,7 @@ class CodeGenerator:
                                     self.code.append(
                                         f"SET {instr[2][1][1] // instr[2][2][1]}")
 
-                        #self.divide((instr[2][1], instr[2][2]))
+                        # self.divide((instr[2][1], instr[2][2]))
                         # self.code.append(
                         #    f"LOAD {self.context.memory_offset + 3}")
 
@@ -373,32 +410,75 @@ class CodeGenerator:
                             self.check_variable(instr[2][1][1])
                             if instr[2][2][0] == "ID":  # ID % ID
                                 self.check_variable(instr[2][2][1])
-                                self.divide((instr[2][1], instr[2][2]))
+                                # self.divide((instr[2][1], instr[2][2]))
+                                self.load_variable(instr[2][2][1])
+                                self.code.append(f"JPOS {len(self.code) + 3}")
+                                self.code.append("SET 0")
+                                self.code.append(f"JUMP {len(self.code) + 8}")
                                 self.code.append(
-                                    f"LOAD {self.context.memory_offset}")
+                                    f'STORE {self.context.get_procedure("DIV").get_variable("b").memory_address}')
+                                self.load_variable(instr[2][1][1])
+                                self.code.append(
+                                    f'STORE {self.context.get_procedure("DIV").get_variable("a").memory_address}')
+                                self.code.append(f"SET {len(self.code) + 3}")
+                                self.code.append(
+                                    "STORE " + str(self.context.get_procedure("DIV").get_variable("JUMPVAR").memory_address))
+                                self.code.append(
+                                    f'JUMP {self.context.get_procedure("DIV").procedure_address}')
+                                self.code.append(
+                                    f'LOAD {self.context.get_procedure("DIV").get_variable("a").memory_address}')
                             elif instr[2][2][0] == "NUM":  # ID % NUM
                                 if instr[2][2][1] == 0:
                                     self.code.append("SET 0")
                                 else:
-                                    self.divide((instr[2][1], instr[2][2]))
+                                    # self.divide((instr[2][1], instr[2][2]))
+                                    self.code.append(f"SET {instr[2][2][1]}")
                                     self.code.append(
-                                        f"LOAD {self.context.memory_offset}")
+                                        f'STORE {self.context.get_procedure("DIV").get_variable("b").memory_address}')
+                                    self.load_variable(instr[2][1][1])
+                                    self.code.append(
+                                        f'STORE {self.context.get_procedure("DIV").get_variable("a").memory_address}')
+                                    self.code.append(
+                                        f"SET {len(self.code) + 3}")
+                                    self.code.append(
+                                        "STORE " + str(self.context.get_procedure("DIV").get_variable("JUMPVAR").memory_address))
+                                    self.code.append(
+                                        f'JUMP {self.context.get_procedure("DIV").procedure_address}')
+                                    self.code.append(
+                                        f'LOAD {self.context.get_procedure("DIV").get_variable("a").memory_address}')
                         elif instr[2][1][0] == "NUM":
                             if instr[2][2][0] == "ID":  # NUM % ID
                                 self.check_variable(instr[2][2][1])
                                 if instr[2][1][1] == 0:
                                     self.code.append("SET 0")
                                 else:
-                                    self.divide((instr[2][1], instr[2][2]))
+                                    # self.divide((instr[2][1], instr[2][2]))
+                                    self.load_variable(instr[2][2][1])
                                     self.code.append(
-                                        f"LOAD {self.context.memory_offset}")
+                                        f"JPOS {len(self.code) + 3}")
+                                    self.code.append("SET 0")
+                                    self.code.append(
+                                        f"JUMP {len(self.code) + 8}")
+                                    self.code.append(
+                                        f'STORE {self.context.get_procedure("DIV").get_variable("b").memory_address}')
+                                    self.code.append(f"SET {instr[2][1][1]}")
+                                    self.code.append(
+                                        f'STORE {self.context.get_procedure("DIV").get_variable("a").memory_address}')
+                                    self.code.append(
+                                        f"SET {len(self.code) + 3}")
+                                    self.code.append(
+                                        "STORE " + str(self.context.get_procedure("DIV").get_variable("JUMPVAR").memory_address))
+                                    self.code.append(
+                                        f'JUMP {self.context.get_procedure("DIV").procedure_address}')
+                                    self.code.append(
+                                        f'LOAD {self.context.get_procedure("DIV").get_variable("a").memory_address}')
                             elif instr[2][2][0] == "NUM":  # NUM % NUM
                                 if instr[2][1][1] == 0 or instr[2][2][1] == 0:
                                     self.code.append("SET 0")
                                 else:
                                     self.code.append(
                                         f"SET {instr[2][1][1] % instr[2][2][1]}")
-                        #self.divide((instr[2][1], instr[2][2]))
+                        # self.divide((instr[2][1], instr[2][2]))
                         # self.code.append(
                         #    f"LOAD {self.context.memory_offset}")
 
@@ -603,7 +683,6 @@ class CodeGenerator:
         self.code.append(
             f"STORE {self.context.memory_offset + 3}")
 
-
         self.code.append(f"LOAD {self.context.memory_offset + 1}")
         self.code.append(f"SUB {self.context.memory_offset}")
         self.code.append(f"JPOS {len(self.code) + 5}")
@@ -670,7 +749,8 @@ class CodeGenerator:
 
     def delete_unused_procedures(self):
         # nazwy wszystkich procedur
-        proc_names = [proc.name for proc in self.context.procedures[:-1]]
+        # bez MAIN, MUL, DIV
+        proc_names = [proc.name for proc in self.context.procedures[:-3]]
 
         proc_queue = []  # tu beda dodawane procedury wykonane, by sprawdzic jakie w nich beda wykonane procedury
         # wielokrotnie splaszczone ast w main

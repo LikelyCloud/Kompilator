@@ -87,6 +87,38 @@ class Parser(sly.Parser):
     @_('procedures main')
     def program_all(self, p):
         # return "PROGRAM", p.procedures, p.main
+        self.context.add_procedure(Procedure("MUL"))
+        self.context.get_procedure("MUL").add_variable(
+            Variable("a", self.context.memory_offset))
+        self.context.memory_offset += 1
+        self.context.get_procedure("MUL").add_variable(
+            Variable("b", self.context.memory_offset))
+        self.context.memory_offset += 1
+        self.context.get_procedure("MUL").add_variable(
+            Variable("c", self.context.memory_offset))
+        self.context.memory_offset += 1
+        self.context.get_procedure("MUL").add_variable(
+            Variable("d", self.context.memory_offset))
+        self.context.memory_offset += 1
+        self.context.get_procedure("MUL").add_variable(
+            Variable("JUMPVAR", self.context.memory_offset))
+        self.context.memory_offset += 1
+        self.context.add_procedure(Procedure("DIV"))
+        self.context.get_procedure("DIV").add_variable(
+            Variable("a", self.context.memory_offset))
+        self.context.memory_offset += 1
+        self.context.get_procedure("DIV").add_variable(
+            Variable("b", self.context.memory_offset))
+        self.context.memory_offset += 1
+        self.context.get_procedure("DIV").add_variable(
+            Variable("d", self.context.memory_offset))
+        self.context.memory_offset += 1
+        self.context.get_procedure("DIV").add_variable(
+            Variable("r", self.context.memory_offset))
+        self.context.memory_offset += 1
+        self.context.get_procedure("DIV").add_variable(
+            Variable("JUMPVAR", self.context.memory_offset))
+        self.context.memory_offset += 1
         self.ast = ("PROCEDURES", p.procedures), p.main
 
     @_('procedures PROCEDURE proc_head IS VAR declarations BEGIN commands END')
@@ -204,7 +236,7 @@ class Parser(sly.Parser):
                 f">>> Incorrect number of arguments in procedure {p.proc_head[0]} in line {p.lineno}")
         # zakladam ze wszyskie zmienne przekazane do fuknkcji (nawet te niezainicjalizowane) po wyjsciu beda zainicjalizowane
         # zmieniono
-        #self.context.get_procedure(p.proc_head[0]).used = True
+        # self.context.get_procedure(p.proc_head[0]).used = True
         return "PROC_HEAD", p.proc_head
 
     @ _('READ ID SEMICOLON')
@@ -217,12 +249,6 @@ class Parser(sly.Parser):
 
     @ _('ID LEB declarations RIB')
     def proc_head(self, p):
-        # self.context.current_procedure = p.ID
-        # print(self.context.current_procedure)
-        #print(f"Proc head:{p.ID}")
-        # for var in p.declarations:
-        # print(var)
-        #self.context.get_procedure(p.ID).get_variable(var).declared = True
         return p.ID, p.declarations
 
     @ _('declarations COMMA ID')
@@ -247,14 +273,20 @@ class Parser(sly.Parser):
 
     @ _('value MUL value')
     def expression(self, p):
+        if p.value0[0] == "ID" and p.value1[0] == "ID":
+            self.context.mul = True
         return "MUL", p.value0, p.value1
 
     @ _('value DIV value')
     def expression(self, p):
+        if p.value0[0] == "ID" or p.value1[0] == "ID":
+            self.context.div = True
         return "DIV", p.value0, p.value1
 
     @ _('value MOD value')
     def expression(self, p):
+        if p.value0[0] == "ID" or p.value1[0] == "ID":
+            self.context.div = True
         return "MOD", p.value0, p.value1
 
     @ _('value EQ value')

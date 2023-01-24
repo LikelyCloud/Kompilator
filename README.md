@@ -12,11 +12,11 @@ pip install sly
 ```
 
 ## Opis plików
-compiler.py -> główny plik programu
-code_generator.py -> plik generujący kod na podstawie otrzymanego AST
-context.py -> plik definiujący struktury danych używane w programie
-lexer_parser.py -> plik zawierający parser i lekser
-exceptions.py -> plik definiujący wyjątki
+compiler.py -> główny plik programu <br />
+code_generator.py -> plik generujący kod na podstawie otrzymanego AST <br />
+context.py -> plik definiujący struktury danych używane w programie <br />
+lexer_parser.py -> plik zawierający parser i lekser <br />
+exceptions.py -> plik definiujący wyjątki <br />
 
 ## Użycie
 

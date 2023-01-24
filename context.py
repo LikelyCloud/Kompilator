@@ -1,24 +1,18 @@
-#from exceptions import *
 
 
 class Variable:
-    # name
-    # value
     def __init__(self, name: str, memory_address: int, formal: bool = False, declared: bool = False):
         self.name = name
         self.memory_address = memory_address
         self.formal = formal
         self.declared = declared
         self.used = False
-        #self.value = None
 
     def __str__(self):
         return f"Name: {self.name}, memory_address: {self.memory_address}, formal: {self.formal}, declared: {self.declared}, used: {self.used}"
 
 
 class Procedure:
-    # name
-    # variables
     def __init__(self, name: str):
         self.name = name
         self.variables = []
@@ -86,13 +80,3 @@ class Context:
                 stringbuilder += f"({var}) "
             stringbuilder += "]\n"
         return stringbuilder
-
-
-"""
-proc = Procedure("swap")
-proc.add_variable(Variable("a", True, 25))
-proc.add_variable(Variable("a", True, 25))
-print(proc)
-proc.get_variable("a").name = "26"
-print(proc)
-"""

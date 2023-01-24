@@ -12,17 +12,9 @@ if __name__ == "__main__":
     else:
         with open(sys.argv[1], 'r') as input_file:
             input_content = input_file.read()
-        # print(input_content)
         try:
-            # tokens = lexer.tokenize(input_content)
-            # for tok in tokens:
-            #    print(tok)
             parser.parse(lexer.tokenize(input_content))
-            # print(parser.context, "#######")
-            # print(parser.ast)
             code = CodeGenerator(parser.ast, parser.context)
-            # code = parser.context
-            # print(code)
             with open(sys.argv[2], 'w') as output_file:
                 for line in list(map(lambda instr: instr + '\n', code.code)):
                     output_file.write(line)

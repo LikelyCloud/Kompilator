@@ -1,0 +1,25 @@
+# Kompilator
+
+Kompilator napisany na zaliczenie kursu JFTT 2022/2023
+
+## Instalacja potrzepnych pakietów
+
+```bash
+pip install foobar
+sudo apt install python3
+sudo apt install python3-pip
+pip install sly
+```
+
+## Opis plików
+compiler.py -> główny plik programu
+code_generator.py -> plik generujący kod na podstawie otrzymanego AST
+context.py -> plik definiujący struktury danych używane w programie
+lexer_parser.py -> plik zawierający parser i lekser
+exceptions.py -> plik definiujący wyjątki
+
+## Użycie
+
+```bash
+python3 compiler.py <input_file> <output_file>
+```

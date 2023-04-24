@@ -2,7 +2,7 @@
 
 Kompilator napisany na zaliczenie kursu JFTT 2022/2023
 
-## Instalacja potrzepnych pakietów
+## Instalacja potrzebnych pakietów
 
 ```bash
 pip install foobar

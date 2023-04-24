@@ -5,7 +5,6 @@ Kompilator napisany na zaliczenie kursu JFTT 2022/2023
 ## Instalacja potrzebnych pakietów
 
 ```bash
-pip install foobar
 sudo apt install python3
 sudo apt install python3-pip
 pip install sly
